@@ -12,19 +12,16 @@ export default function NewOrderPage() {
   const ordersRef = collection(db, "orders");
 
   // Load members from Firebase
-  useEffect(() => {
-    const loadMembers = async () => {
-      const data = await getDocs(membersRef);
-      const list = data.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-      setMembers(list);
+useEffect(() => {
+  const fetchMembers = async () => {
+    const data = await getDocs(membersRef);
+    setMembers(data.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+  };
 
-      const initial = {};
-      list.forEach(m => (initial[m.id] = ""));
-      setAmounts(initial);
-    };
+  fetchMembers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
-    loadMembers();
-  }, []);
 
   const handleAmountChange = (id, value) => {
     setAmounts({ ...amounts, [id]: value });

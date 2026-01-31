@@ -12,9 +12,12 @@ export default function BalancesPage() {
   const [settleInfo, setSettleInfo] = useState(null); // { from, to, maxAmount }
   const [settleAmount, setSettleAmount] = useState("");
 
-  useEffect(() => {
-    loadData();
-  }, [filter]);
+useEffect(() => {
+  loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [filter]);
+
+
 
   const loadData = async () => {
     const ordersSnap = await getDocs(collection(db, "orders"));

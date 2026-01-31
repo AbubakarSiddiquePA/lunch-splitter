@@ -19,9 +19,11 @@ export default function TeamPage() {
     setMembers(data.docs.map(doc => ({ ...doc.data(), id: doc.id })));
   };
 
-  useEffect(() => {
-    loadMembers();
-  }, []);
+ useEffect(() => {
+  loadMembers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
+
 
   const addMember = async () => {
     if (!name.trim()) return;
