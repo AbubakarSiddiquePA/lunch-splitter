@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { collection, getDocs, addDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
+import { auth } from "../auth";
 
 export default function BalancesPage() {
   const [members, setMembers] = useState([]);
@@ -66,11 +67,15 @@ export default function BalancesPage() {
       const payer = order.paidBy;
 
       order.participants.forEach((p) => {
-        if (!totalMap[p.userId] || !totalMap[payer]) return; // 👈 skip deleted users
-
         if (p.userId !== payer) {
           const key = `${p.userId}-${payer}`;
-          debtMap[key] = (debtMap[key] || 0) + p.amount;
+
+          if (!debtMap[key]) debtMap[key] = [];
+
+          debtMap[key].push({
+            amount: p.amount,
+            date: order.date,
+          });
 
           totalMap[p.userId].give += p.amount;
           totalMap[payer].receive += p.amount;
@@ -93,18 +98,40 @@ export default function BalancesPage() {
         return;
 
       const key = `${s.from}-${s.to}`;
-      debtMap[key] = (debtMap[key] || 0) - s.amount;
+      if (!debtMap[key]) return;
+
+      let remaining = s.amount;
+
+      debtMap[key] = debtMap[key]
+        .map((entry) => {
+          if (remaining <= 0) return entry;
+
+          const deduction = Math.min(entry.amount, remaining);
+          remaining -= deduction;
+
+          return { ...entry, amount: entry.amount - deduction };
+        })
+        .filter((entry) => entry.amount > 0.01);
 
       if (totalMap[s.from]) totalMap[s.from].give -= s.amount;
       if (totalMap[s.to]) totalMap[s.to].receive -= s.amount;
     });
+    const debtList = [];
 
-    const debtList = Object.entries(debtMap)
-      .filter(([_, amt]) => amt > 0.01)
-      .map(([key, amount]) => {
-        const [from, to] = key.split("-");
-        return { from, to, amount };
+    Object.entries(debtMap).forEach(([key, entries]) => {
+      const [from, to] = key.split("-");
+
+      entries.forEach((entry) => {
+        if (entry.amount > 0.01) {
+          debtList.push({
+            from,
+            to,
+            amount: entry.amount,
+            date: entry.date,
+          });
+        }
       });
+    });
 
     setDebts(debtList);
     setTotals(totalMap);
@@ -140,6 +167,8 @@ export default function BalancesPage() {
       console.error(err);
     }
   };
+  const currentUser = auth.currentUser;
+  const isAdmin = currentUser?.email === "greeshma@housekeepingco.com";
 
   return (
     <div className="card">
@@ -178,14 +207,28 @@ export default function BalancesPage() {
       ) : (
         debts.map((d, i) => (
           <div key={i} className="row" style={{ padding: "6px 0" }}>
-            <span>
-              <b>{getName(d.from)}</b> owes <b>{getName(d.to)}</b>
-            </span>
+            <div>
+              <div style={{ fontSize: "12px", color: "#6b7280" }}>
+                {new Date(d.date).toLocaleDateString()}
+              </div>
+
+              <span>
+                <b>{getName(d.from)}</b> owes <b>{getName(d.to)}</b>
+              </span>
+            </div>
+
             <span>
               <b>{d.amount.toFixed(2)}</b>
               <button
                 className="btn small"
+                disabled={!isAdmin}
+                style={{
+                  opacity: isAdmin ? 1 : 0.5,
+                  cursor: isAdmin ? "pointer" : "not-allowed",
+                }}
                 onClick={() => {
+                  if (!isAdmin)
+                    return toast.error("Only admin can settle payments");
                   setSettleInfo({ from: d.from, to: d.to });
                   setSettleAmount(d.amount.toFixed(2));
                 }}

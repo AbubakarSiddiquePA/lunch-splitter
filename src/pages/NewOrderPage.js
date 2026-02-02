@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { collection, getDocs, addDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
+import { HiOutlineCalculator } from "react-icons/hi";
 
 export default function NewOrderPage() {
   const [showAddMember, setShowAddMember] = useState(false);
@@ -13,6 +14,8 @@ export default function NewOrderPage() {
 
   const membersRef = collection(db, "members");
   const ordersRef = collection(db, "orders");
+  const [showCalc, setShowCalc] = useState(false);
+  const [calcValue, setCalcValue] = useState("");
 
   // Load members from Firebase
   useEffect(() => {
@@ -105,17 +108,34 @@ export default function NewOrderPage() {
 
   return (
     <div className="card">
-      <h2>📝 New Lunch Order</h2>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <h2>📝 New Lunch Order</h2>
 
+<button
+  className="icon-btn"
+  onClick={() => setShowCalc(true)}
+  title="Open Calculator"
+>
+  <HiOutlineCalculator size={20} />
+</button>
+
+
+      </div>
       <input
-        className="input"
+        className="input full-width"
         placeholder="Restaurant"
         value={restaurant}
         onChange={(e) => setRestaurant(e.target.value)}
       />
 
       <select
-        className="input"
+        className="input full-width"
         value={paidBy}
         onChange={(e) => {
           if (e.target.value === "add_new") {
@@ -137,16 +157,50 @@ export default function NewOrderPage() {
       <h3>Enter Amount Per Person</h3>
 
       {members.map((m) => (
-        <div key={m.id} className="row">
-          <span>{m.name}</span>
+        <div key={m.id} className="member-row">
+          <span className="member-name">{m.name}</span>
+
           <input
             type="number"
-            className="input small"
+            className="amount-input"
             value={amounts[m.id] || ""}
             onChange={(e) => handleAmountChange(m.id, e.target.value)}
+            placeholder="0.00"
           />
         </div>
       ))}
+      {showCalc && (
+        <div style={overlayStyle}>
+          <div style={modalStyle}>
+            <h4>Quick Calculator</h4>
+
+            <input
+              type="text"
+              value={calcValue}
+              onChange={(e) => {
+                const val = e.target.value;
+                setCalcValue(val);
+
+                try {
+                  const result = eval(val); // simple math expressions
+                  if (!isNaN(result)) {
+                    setCalcValue(result);
+                  }
+                } catch {}
+              }}
+              className="input"
+              placeholder="Type math like 120/5"
+            />
+
+            <div style={{ marginTop: 10, textAlign: "right" }}>
+              <button className="btn small" onClick={() => setShowCalc(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showAddMember && (
         <div style={overlayStyle}>
           <div style={modalStyle}>

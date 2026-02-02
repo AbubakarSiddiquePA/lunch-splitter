@@ -1,7 +1,18 @@
 body {
   margin: 0;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-  background: #f3f4f6;
+  font-family: sans-serif;
+  background: url("https://images.unsplash.com/photo-1504674900247-0877df9cc836") center/cover no-repeat fixed;
+}
+
+
+/* Soft white overlay so text stays readable */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(4px);
+  z-index: -1;
 }
 
 h1 {
@@ -127,4 +138,90 @@ h1 {
 
 .history-table th:last-child {
   text-align: right;
+}
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 20px 10px 20px; /* added margins */
+}
+.topbar h1 {
+  margin: 0;
+}
+.logout-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #dc2626;
+}
+.loader-screen {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  font-family: sans-serif;
+  color: #374151;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #f97316;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.member-name {
+  width: 160px;      /* Fixed width for all names */
+  font-weight: 500;
+  color: #374151;
+}
+
+.amount-input {
+  width: 120px;      /* Fixed size for all amount inputs */
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  text-align: right;
+}
+.full-width {
+  width: 100%;
+  box-sizing: border-box;
+}
+.icon-btn {
+  background: white;
+  border: 1px solid #e5e7eb;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  transform: translateY(-1px);
 }

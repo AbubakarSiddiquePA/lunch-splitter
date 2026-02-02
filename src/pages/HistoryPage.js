@@ -1,5 +1,6 @@
 import { toast } from "react-toastify";
 import React from "react";
+import { auth } from "../auth";
 
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
@@ -148,6 +149,8 @@ const addNewMember = async () => {
     toast.error("Failed to add member");
   }
 };
+const currentUser = auth.currentUser;
+const isAdmin = currentUser?.email === "greeshma@housekeepingco.com";
 
   return (
     <div className="card">
@@ -189,19 +192,36 @@ const addNewMember = async () => {
                 <td>{getName(order.paidBy)}</td>
                 <td>{order.total}</td>
                 <td>
+<button
+  className="btn small"
+  disabled={!isAdmin}
+  style={{
+    opacity: isAdmin ? 1 : 0.5,
+    cursor: isAdmin ? "pointer" : "not-allowed"
+  }}
+  onClick={() => {
+    if (!isAdmin) return toast.error("Only admin can edit orders");
+    startEdit(order);
+  }}
+>
+  Edit
+</button>
+
                   <button
-                    className="btn small"
-                    disabled={loading}
-                    onClick={() => startEdit(order)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="btn danger small"
-                    onClick={() => setConfirmDeleteId(order.id)}
-                  >
-                    Delete
-                  </button>
+  className="btn danger small"
+  disabled={!isAdmin}
+  style={{
+    opacity: isAdmin ? 1 : 0.5,
+    cursor: isAdmin ? "pointer" : "not-allowed"
+  }}
+  onClick={() => {
+    if (!isAdmin) return toast.error("Only admin can delete orders");
+    setConfirmDeleteId(order.id);
+  }}
+>
+  Delete
+</button>
+
                   <button
                     className="btn small"
                     onClick={() =>
