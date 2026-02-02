@@ -12,24 +12,45 @@ export default function App() {
 
   return (
     <div>
-  <h1>🍽 Office Lunch Splitter</h1>
+      <h1>🍽 Office Lunch Splitter</h1>
 
-  <div className="nav">
-    <button onClick={() => setPage("team")}>Team</button>
-    <button onClick={() => setPage("order")}>New Order</button>
-    <button onClick={() => setPage("history")}>History</button>
-    <button onClick={() => setPage("balances")}>Balances</button>
-  </div>
+      <div className="nav">
+        <button
+          className={page === "team" ? "nav-btn active" : "nav-btn"}
+          onClick={() => setPage("team")}
+        >
+          Team
+        </button>
 
-  <div className="container">
-    {page === "team" && <TeamPage />}
-    {page === "order" && <NewOrderPage />}
-    {page === "history" && <HistoryPage />}
-    {page === "balances" && <BalancesPage />}
-  </div>
-    <ToastContainer position="top-right" autoClose={2500} />
+        <button
+          className={page === "order" ? "nav-btn active" : "nav-btn"}
+          onClick={() => setPage("order")}
+        >
+          New Order
+        </button>
 
-</div>
+        <button
+          className={page === "history" ? "nav-btn active" : "nav-btn"}
+          onClick={() => setPage("history")}
+        >
+          History
+        </button>
 
+        <button
+          className={page === "balances" ? "nav-btn active" : "nav-btn"}
+          onClick={() => setPage("balances")}
+        >
+          Balances
+        </button>
+      </div>
+
+      <div className="container">
+        {page === "team" && <TeamPage />}
+        {page === "order" && <NewOrderPage />}
+        {page === "history" && <HistoryPage />}
+        {page === "balances" && <BalancesPage />}
+      </div>
+      <ToastContainer position="top-right" autoClose={2500} />
+    </div>
   );
 }

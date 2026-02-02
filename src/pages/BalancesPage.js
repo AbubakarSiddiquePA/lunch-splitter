@@ -12,28 +12,26 @@ export default function BalancesPage() {
   const [settleInfo, setSettleInfo] = useState(null); // { from, to, maxAmount }
   const [settleAmount, setSettleAmount] = useState("");
 
-useEffect(() => {
-  loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [filter]);
-
-
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]);
 
   const loadData = async () => {
     const ordersSnap = await getDocs(collection(db, "orders"));
     const membersSnap = await getDocs(collection(db, "members"));
     const settlementsSnap = await getDocs(collection(db, "settlements"));
 
-    const membersList = membersSnap.docs.map(doc => ({
+    const membersList = membersSnap.docs.map((doc) => ({
       ...doc.data(),
-      id: doc.id
+      id: doc.id,
     }));
     setMembers(membersList);
 
     const debtMap = {};
     const totalMap = {};
 
-    membersList.forEach(m => {
+    membersList.forEach((m) => {
       totalMap[m.id] = { give: 0, receive: 0 };
     });
 
@@ -41,14 +39,18 @@ useEffect(() => {
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
 
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - now.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
 
     // ORDERS
-    ordersSnap.docs.forEach(doc => {
+    ordersSnap.docs.forEach((doc) => {
       const order = doc.data();
       const orderDate = new Date(order.date);
 
@@ -58,11 +60,14 @@ useEffect(() => {
         filter === "month" &&
         (orderDate.getMonth() !== currentMonth ||
           orderDate.getFullYear() !== currentYear)
-      ) return;
+      )
+        return;
 
       const payer = order.paidBy;
 
-      order.participants.forEach(p => {
+      order.participants.forEach((p) => {
+        if (!totalMap[p.userId] || !totalMap[payer]) return; // 👈 skip deleted users
+
         if (p.userId !== payer) {
           const key = `${p.userId}-${payer}`;
           debtMap[key] = (debtMap[key] || 0) + p.amount;
@@ -74,7 +79,7 @@ useEffect(() => {
     });
 
     // SETTLEMENTS
-    settlementsSnap.docs.forEach(doc => {
+    settlementsSnap.docs.forEach((doc) => {
       const s = doc.data();
       const settlementDate = new Date(s.date);
 
@@ -84,13 +89,14 @@ useEffect(() => {
         filter === "month" &&
         (settlementDate.getMonth() !== currentMonth ||
           settlementDate.getFullYear() !== currentYear)
-      ) return;
+      )
+        return;
 
       const key = `${s.from}-${s.to}`;
       debtMap[key] = (debtMap[key] || 0) - s.amount;
 
-      totalMap[s.from].give -= s.amount;
-      totalMap[s.to].receive -= s.amount;
+      if (totalMap[s.from]) totalMap[s.from].give -= s.amount;
+      if (totalMap[s.to]) totalMap[s.to].receive -= s.amount;
     });
 
     const debtList = Object.entries(debtMap)
@@ -104,8 +110,8 @@ useEffect(() => {
     setTotals(totalMap);
   };
 
-  const getName = id => {
-    const user = members.find(m => m.id === id);
+  const getName = (id) => {
+    const user = members.find((m) => m.id === id);
     return user ? user.name : "Unknown";
   };
 
@@ -122,7 +128,7 @@ useEffect(() => {
         from: settleInfo.from,
         to: settleInfo.to,
         amount: num,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
       });
 
       toast.success("Settlement recorded");
@@ -143,7 +149,7 @@ useEffect(() => {
         <select
           className="input"
           value={filter}
-          onChange={e => setFilter(e.target.value)}
+          onChange={(e) => setFilter(e.target.value)}
         >
           <option value="all">All Time</option>
           <option value="today">Today</option>
@@ -154,12 +160,12 @@ useEffect(() => {
 
       <div className="card" style={{ background: "#f9fafb" }}>
         <h3>📊 Total To Give / Receive</h3>
-        {Object.keys(totals).map(id => (
+        {Object.keys(totals).map((id) => (
           <div key={id} className="row">
             <span>{getName(id)}</span>
             <span>
-              Give: <b>{totals[id].give.toFixed(2)}</b> | Receive:{" "}
-              <b>{totals[id].receive.toFixed(2)}</b>
+              Give:<b>{(totals[id]?.give || 0).toFixed(2)}</b>| Receive:{" "}
+              <b>{(totals[id]?.receive || 0).toFixed(2)}</b>
             </span>
           </div>
         ))}
@@ -207,7 +213,13 @@ useEffect(() => {
               onChange={(e) => setSettleAmount(e.target.value)}
             />
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+              }}
+            >
               <button className="btn" onClick={() => setSettleInfo(null)}>
                 Cancel
               </button>

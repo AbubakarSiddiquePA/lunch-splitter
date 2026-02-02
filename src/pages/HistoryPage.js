@@ -9,9 +9,13 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  addDoc,
 } from "firebase/firestore";
 
 export default function HistoryPage() {
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [newMemberName, setNewMemberName] = useState("");
+
   const [orders, setOrders] = useState([]);
   const [members, setMembers] = useState([]);
   const [fromDate, setFromDate] = useState("");
@@ -112,6 +116,38 @@ export default function HistoryPage() {
     if (toDate && orderDate > new Date(toDate)) return false;
     return true;
   });
+const addNewMember = async () => {
+  const trimmed = newMemberName.trim();
+
+  if (!trimmed) {
+    toast.warning("Enter member name");
+    return;
+  }
+
+  const exists = members.some(
+    m => m.name.toLowerCase() === trimmed.toLowerCase()
+  );
+
+  if (exists) {
+    toast.error("Member already exists");
+    return;
+  }
+
+  try {
+    const docRef = await addDoc(collection(db, "members"), { name: trimmed });
+
+    const newMember = { id: docRef.id, name: trimmed };
+    setMembers([...members, newMember]);
+    setEditPaidBy(docRef.id);
+
+    toast.success("Member added");
+    setNewMemberName("");
+    setShowAddMember(false);
+
+  } catch (err) {
+    toast.error("Failed to add member");
+  }
+};
 
   return (
     <div className="card">
@@ -132,7 +168,8 @@ export default function HistoryPage() {
         />
       </div>
 
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+     <table className="history-table">
+
         <thead>
           <tr style={{ borderBottom: "1px solid #ddd" }}>
             <th>Date</th>
@@ -211,13 +248,20 @@ export default function HistoryPage() {
                       <select
                         className="input"
                         value={editPaidBy}
-                        onChange={(e) => setEditPaidBy(e.target.value)}
+                        onChange={(e) => {
+                          if (e.target.value === "add_new") {
+                            setShowAddMember(true);
+                            return;
+                          }
+                          setEditPaidBy(e.target.value);
+                        }}
                       >
                         {members.map((m) => (
                           <option key={m.id} value={m.id}>
                             {m.name}
                           </option>
                         ))}
+                        <option value="add_new">➕ Add New Member</option>
                       </select>
 
                       <h4>Amounts</h4>
@@ -262,6 +306,26 @@ export default function HistoryPage() {
           ))}
         </tbody>
       </table>
+      {showAddMember && (
+  <div style={overlayStyle}>
+    <div style={modalStyle}>
+      <h4>Add New Member</h4>
+
+      <input
+        className="input"
+        placeholder="Member name"
+        value={newMemberName}
+        onChange={(e) => setNewMemberName(e.target.value)}
+      />
+
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+        <button className="btn" onClick={() => setShowAddMember(false)}>Cancel</button>
+        <button className="btn" onClick={addNewMember}>Add</button>
+      </div>
+    </div>
+  </div>
+)}
+
       {confirmDeleteId && (
         <div style={overlayStyle}>
           <div style={modalStyle}>

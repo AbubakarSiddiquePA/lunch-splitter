@@ -7,10 +7,12 @@ import {
   deleteDoc,
   doc
 } from "firebase/firestore";
+import { toast } from "react-toastify";
 
 export default function TeamPage() {
   const [name, setName] = useState("");
   const [members, setMembers] = useState([]);
+  const [confirmId, setConfirmId] = useState(null);
 
   const membersRef = collection(db, "members");
 
@@ -19,24 +21,82 @@ export default function TeamPage() {
     setMembers(data.docs.map(doc => ({ ...doc.data(), id: doc.id })));
   };
 
- useEffect(() => {
-  loadMembers();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
-
+  useEffect(() => {
+    loadMembers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const addMember = async () => {
-    if (!name.trim()) return;
-    await addDoc(membersRef, { name });
-    setName("");
-    loadMembers();
+    const trimmed = name.trim();
+
+    if (!trimmed) {
+      toast.warning("Please enter a name");
+      return;
+    }
+
+    const exists = members.some(
+      m => m.name.toLowerCase() === trimmed.toLowerCase()
+    );
+
+    if (exists) {
+      toast.error("Member already exists");
+      return;
+    }
+
+    try {
+      await addDoc(membersRef, { name: trimmed });
+      toast.success("Member added");
+      setName("");
+      loadMembers();
+    } catch (err) {
+      toast.error("Failed to add member");
+      console.error(err);
+    }
   };
 
-  const removeMember = async (id) => {
-    if (!window.confirm("Remove this member?")) return;
-    await deleteDoc(doc(db, "members", id));
-    loadMembers();
+  const confirmRemove = async () => {
+    try {
+      await deleteDoc(doc(db, "members", confirmId));
+      toast.success("Member removed");
+      setConfirmId(null);
+      loadMembers();
+    } catch (err) {
+      toast.error("Failed to remove member");
+      console.error(err);
+    }
   };
+   
+  const canRemoveMember = async (memberId) => {
+  const ordersSnap = await getDocs(collection(db, "orders"));
+  const settlementsSnap = await getDocs(collection(db, "settlements"));
+
+  let give = 0;
+  let receive = 0;
+
+  // Check orders
+  ordersSnap.forEach(doc => {
+    const order = doc.data();
+    const payer = order.paidBy;
+
+    order.participants.forEach(p => {
+      if (p.userId === memberId && memberId !== payer) {
+        give += p.amount;
+      }
+      if (payer === memberId && p.userId !== memberId) {
+        receive += p.amount;
+      }
+    });
+  });
+
+  // Subtract settlements
+  settlementsSnap.forEach(doc => {
+    const s = doc.data();
+    if (s.from === memberId) give -= s.amount;
+    if (s.to === memberId) receive -= s.amount;
+  });
+
+  return give <= 0.01 && receive <= 0.01;
+};
 
   return (
     <div className="card">
@@ -64,7 +124,14 @@ export default function TeamPage() {
               <span>{m.name}</span>
               <button
                 className="btn danger small"
-                onClick={() => removeMember(m.id)}
+onClick={async () => {
+  const allowed = await canRemoveMember(m.id);
+  if (!allowed) {
+toast.error("Settle all balances before removing this member");
+    return;
+  }
+  setConfirmId(m.id);
+}}
               >
                 Remove
               </button>
@@ -72,6 +139,45 @@ export default function TeamPage() {
           ))
         )}
       </div>
+
+      {confirmId && (
+        <div style={overlayStyle}>
+          <div style={modalStyle}>
+            <h4>Remove Member?</h4>
+            <p>This action cannot be undone.</p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+              <button className="btn" onClick={() => setConfirmId(null)}>
+                Cancel
+              </button>
+              <button className="btn danger" onClick={confirmRemove}>
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+// 👇 Styles MUST be outside the component
+
+const overlayStyle = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  background: "rgba(0,0,0,0.4)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 1000,
+};
+
+const modalStyle = {
+  background: "white",
+  padding: "20px",
+  borderRadius: "8px",
+  width: "300px",
+};

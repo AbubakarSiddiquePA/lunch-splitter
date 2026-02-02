@@ -76,3 +76,55 @@ h1 {
   font-size: 12px;
   margin-left: 5px;
 }
+.nav {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.nav-btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+  background: #f3f4f6;
+}
+
+.nav-btn.active {
+  background: #f97316; /* nice orange */
+  color: white;
+  border-color: #f97316;
+  font-weight: 600;
+}
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.history-table th,
+.history-table td {
+  padding: 10px 8px;
+  text-align: left;
+}
+
+.history-table thead {
+  background: #f3f4f6;
+}
+
+.history-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.history-table td:last-child {
+  text-align: right;
+}
+
+.history-table th:last-child {
+  text-align: right;
+}
