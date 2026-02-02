@@ -3,6 +3,7 @@ import { db } from "../firebase";
 import { collection, getDocs, addDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { HiOutlineCalculator } from "react-icons/hi";
+import { evaluate } from "mathjs";
 
 export default function NewOrderPage() {
   const [showAddMember, setShowAddMember] = useState(false);
@@ -177,17 +178,21 @@ export default function NewOrderPage() {
             <input
               type="text"
               value={calcValue}
-              onChange={(e) => {
-                const val = e.target.value;
-                setCalcValue(val);
+onChange={(e) => {
+  const val = e.target.value;
+  setCalcValue(val);
 
-                try {
-                  const result = eval(val); // simple math expressions
-                  if (!isNaN(result)) {
-                    setCalcValue(result);
-                  }
-                } catch {}
-              }}
+  try {
+    const result = evaluate(val);
+    if (!isNaN(result)) {
+      setCalcValue(result.toString());
+    }
+  } catch {
+    // ignore invalid expressions while typing
+  }
+}}
+
+
               className="input"
               placeholder="Type math like 120/5"
             />
