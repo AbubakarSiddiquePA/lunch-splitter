@@ -3,7 +3,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./auth";
 import { toast, ToastContainer } from "react-toastify";
 
-import TeamPage from "./pages/teamPage";
+import TeamPage from "./pages/TeamPage";
 import NewOrderPage from "./pages/NewOrderPage";
 import HistoryPage from "./pages/HistoryPage";
 import BalancesPage from "./pages/BalancesPage";
