@@ -60,12 +60,13 @@ export default function App() {
       {/* TOP BAR */}
       <div className="topbar">
         <h1>🍽 Office Lunch Splitter</h1>
-        <button
-          className="logout-btn"
-          onClick={() => setShowLogoutConfirm(true)}
-        >
-          Logout
-        </button>
+<button
+  className="logout-btn"
+  onClick={() => setShowLogoutConfirm(true)}
+>
+  ⎋ Logout
+</button>
+
       </div>
 
       {/* BODY AREA */}
@@ -162,6 +163,31 @@ export default function App() {
           </div>
         </div>
       )}
+{showLogoutConfirm && (
+  <div className="modal-overlay">
+    <div className="modal-card">
+      <h3 className="modal-title">Logout?</h3>
+      <p className="modal-text">Are you sure you want to logout?</p>
+
+      <div className="modal-actions">
+        <button className="btn-secondary" onClick={() => setShowLogoutConfirm(false)}>
+          Cancel
+        </button>
+
+        <button
+          className="btn-danger"
+          onClick={async () => {
+            await handleLogout();
+            setShowLogoutConfirm(false);
+          }}
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       <ToastContainer position="top-right" autoClose={2500} />
     </div>

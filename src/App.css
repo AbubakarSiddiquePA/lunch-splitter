@@ -1,19 +1,21 @@
 body {
   margin: 0;
   font-family: sans-serif;
-  background: url("https://images.unsplash.com/photo-1504674900247-0877df9cc836") center/cover no-repeat fixed;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
+    url("https://images.unsplash.com/photo-1504674900247-0877df9cc836") center/cover no-repeat fixed;
 }
 
 
 /* Soft white overlay so text stays readable */
-body::before {
+/* body::before {
   content: "";
   position: fixed;
   inset: 0;
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(4px);
   z-index: -1;
-}
+} */
 
 h1 {
   text-align: center;
@@ -46,11 +48,12 @@ h1 {
 }
 
 .card {
-  background: white;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
   padding: 20px;
-  border-radius: 10px;
+  border-radius: 14px;
   margin-bottom: 15px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .input {
@@ -171,8 +174,7 @@ h1 {
 /* Sidebar */
 .sidebar {
   width: 220px;
-  /* background: #1f2937; */
-  color: white;
+  border-right: 1px solid rgba(0,0,0,0.08);  color: white;
   display: flex;
   flex-direction: column;
   padding: 15px;
@@ -231,16 +233,25 @@ h1 {
 }
 
 .logout-btn {
-  background: #042959;
+  background: #ef4444;
   color: white;
   border: none;
   padding: 8px 14px;
-  border-radius: 6px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .logout-btn:hover {
   background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.logout-btn:active {
+  transform: scale(0.97);
 }
 
 .loader-screen {
@@ -408,13 +419,17 @@ h1 {
 .details-table td {
   border-bottom: 1px solid #f1f5f9;
 }
+
 .details-table.compact {
-  width: auto;              /* don't stretch full width */
+  width: auto;
+  /* don't stretch full width */
   min-width: 260px;
 }
+
 .details-table.compact th,
 .details-table.compact td {
-  padding: 6px 12px 6px 0;  /* reduce horizontal spacing */
+  padding: 6px 12px 6px 0;
+  /* reduce horizontal spacing */
 }
 
 .details-table.compact th:last-child,
@@ -422,6 +437,7 @@ h1 {
   text-align: right;
   padding-right: 0;
 }
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -431,5 +447,103 @@ h1 {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ===== MODAL OVERLAY ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+/* ===== MODAL CARD ===== */
+.modal-card {
+  background: white;
+  width: 320px;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  animation: slideUp 0.25s ease;
+}
+
+/* TITLE */
+.modal-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* TEXT */
+.modal-text {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+/* ACTION BUTTONS */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* CANCEL BUTTON */
+.btn-secondary {
+  background: #e5e7eb;
+  color: #111827;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-secondary:hover {
+  background: #d1d5db;
+}
+
+/* DANGER BUTTON */
+.btn-danger {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
