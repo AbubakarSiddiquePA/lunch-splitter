@@ -117,40 +117,39 @@ export default function HistoryPage() {
     if (toDate && orderDate > new Date(toDate)) return false;
     return true;
   });
-const addNewMember = async () => {
-  const trimmed = newMemberName.trim();
+  const addNewMember = async () => {
+    const trimmed = newMemberName.trim();
 
-  if (!trimmed) {
-    toast.warning("Enter member name");
-    return;
-  }
+    if (!trimmed) {
+      toast.warning("Enter member name");
+      return;
+    }
 
-  const exists = members.some(
-    m => m.name.toLowerCase() === trimmed.toLowerCase()
-  );
+    const exists = members.some(
+      (m) => m.name.toLowerCase() === trimmed.toLowerCase(),
+    );
 
-  if (exists) {
-    toast.error("Member already exists");
-    return;
-  }
+    if (exists) {
+      toast.error("Member already exists");
+      return;
+    }
 
-  try {
-    const docRef = await addDoc(collection(db, "members"), { name: trimmed });
+    try {
+      const docRef = await addDoc(collection(db, "members"), { name: trimmed });
 
-    const newMember = { id: docRef.id, name: trimmed };
-    setMembers([...members, newMember]);
-    setEditPaidBy(docRef.id);
+      const newMember = { id: docRef.id, name: trimmed };
+      setMembers([...members, newMember]);
+      setEditPaidBy(docRef.id);
 
-    toast.success("Member added");
-    setNewMemberName("");
-    setShowAddMember(false);
-
-  } catch (err) {
-    toast.error("Failed to add member");
-  }
-};
-const currentUser = auth.currentUser;
-const isAdmin = currentUser?.email === "greeshma@housekeepingco.com";
+      toast.success("Member added");
+      setNewMemberName("");
+      setShowAddMember(false);
+    } catch (err) {
+      toast.error("Failed to add member");
+    }
+  };
+  const currentUser = auth.currentUser;
+  const isAdmin = currentUser?.email === "greeshma@housekeepingco.com";
 
   return (
     <div className="card">
@@ -171,8 +170,7 @@ const isAdmin = currentUser?.email === "greeshma@housekeepingco.com";
         />
       </div>
 
-     <table className="history-table">
-
+      <table className="history-table">
         <thead>
           <tr style={{ borderBottom: "1px solid #ddd" }}>
             <th>Date</th>
@@ -192,35 +190,37 @@ const isAdmin = currentUser?.email === "greeshma@housekeepingco.com";
                 <td>{getName(order.paidBy)}</td>
                 <td>{order.total}</td>
                 <td>
-<button
-  className="btn small"
-  disabled={!isAdmin}
-  style={{
-    opacity: isAdmin ? 1 : 0.5,
-    cursor: isAdmin ? "pointer" : "not-allowed"
-  }}
-  onClick={() => {
-    if (!isAdmin) return toast.error("Only admin can edit orders");
-    startEdit(order);
-  }}
->
-  Edit
-</button>
+                  <button
+                    className="btn small"
+                    disabled={!isAdmin}
+                    style={{
+                      opacity: isAdmin ? 1 : 0.5,
+                      cursor: isAdmin ? "pointer" : "not-allowed",
+                    }}
+                    onClick={() => {
+                      if (!isAdmin)
+                        return toast.error("Only admin can edit orders");
+                      startEdit(order);
+                    }}
+                  >
+                    Edit
+                  </button>
 
                   <button
-  className="btn danger small"
-  disabled={!isAdmin}
-  style={{
-    opacity: isAdmin ? 1 : 0.5,
-    cursor: isAdmin ? "pointer" : "not-allowed"
-  }}
-  onClick={() => {
-    if (!isAdmin) return toast.error("Only admin can delete orders");
-    setConfirmDeleteId(order.id);
-  }}
->
-  Delete
-</button>
+                    className="btn danger small"
+                    disabled={!isAdmin}
+                    style={{
+                      opacity: isAdmin ? 1 : 0.5,
+                      cursor: isAdmin ? "pointer" : "not-allowed",
+                    }}
+                    onClick={() => {
+                      if (!isAdmin)
+                        return toast.error("Only admin can delete orders");
+                      setConfirmDeleteId(order.id);
+                    }}
+                  >
+                    Delete
+                  </button>
 
                   <button
                     className="btn small"
@@ -228,24 +228,39 @@ const isAdmin = currentUser?.email === "greeshma@housekeepingco.com";
                       setOpenId(openId === order.id ? null : order.id)
                     }
                   >
-                    {openId === order.id ? "Hide" : "Details"}
+                    {openId === order.id ? "▲ Hide" : "▼ Details"}
                   </button>
                 </td>
               </tr>
 
               {/* DETAILS ROW */}
+              {/* DETAILS ROW */}
               {!editOrder && openId === order.id && (
-                <tr>
-                  <td colSpan="5" style={{ background: "#f9fafb" }}>
-                    <div style={{ padding: "10px" }}>
-                      <b>Breakdown:</b>
-                      <ul>
-                        {order.participants.map((p, i) => (
-                          <li key={i}>
-                            {p.name} — {p.amount}
-                          </li>
-                        ))}
-                      </ul>
+                <tr className="details-row">
+                  <td colSpan="5">
+                    <div className="details-box">
+<h4 className="details-title" style={{ textAlign: "left" }}>
+  Order Breakdown
+</h4>
+
+<table className="details-table compact">
+                        <thead>
+                          <tr>
+                            <th>Member</th>
+                            <th style={{ textAlign: "right" }}>Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {order.participants.map((p, i) => (
+                            <tr key={i}>
+                              <td>{p.name}</td>
+                              <td style={{ textAlign: "right" }}>
+                                {Number(p.amount).toFixed(2)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </td>
                 </tr>
@@ -327,24 +342,34 @@ const isAdmin = currentUser?.email === "greeshma@housekeepingco.com";
         </tbody>
       </table>
       {showAddMember && (
-  <div style={overlayStyle}>
-    <div style={modalStyle}>
-      <h4>Add New Member</h4>
+        <div style={overlayStyle}>
+          <div style={modalStyle}>
+            <h4>Add New Member</h4>
 
-      <input
-        className="input"
-        placeholder="Member name"
-        value={newMemberName}
-        onChange={(e) => setNewMemberName(e.target.value)}
-      />
+            <input
+              className="input"
+              placeholder="Member name"
+              value={newMemberName}
+              onChange={(e) => setNewMemberName(e.target.value)}
+            />
 
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-        <button className="btn" onClick={() => setShowAddMember(false)}>Cancel</button>
-        <button className="btn" onClick={addNewMember}>Add</button>
-      </div>
-    </div>
-  </div>
-)}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+              }}
+            >
+              <button className="btn" onClick={() => setShowAddMember(false)}>
+                Cancel
+              </button>
+              <button className="btn" onClick={addNewMember}>
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {confirmDeleteId && (
         <div style={overlayStyle}>

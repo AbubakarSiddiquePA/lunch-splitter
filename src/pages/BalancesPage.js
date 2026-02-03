@@ -12,6 +12,8 @@ export default function BalancesPage() {
 
   const [settleInfo, setSettleInfo] = useState(null); // { from, to, maxAmount }
   const [settleAmount, setSettleAmount] = useState("");
+  const [showSummary, setShowSummary] = useState(true);
+  const [selectedMember, setSelectedMember] = useState("all");
 
   useEffect(() => {
     loadData();
@@ -169,6 +171,12 @@ export default function BalancesPage() {
   };
   const currentUser = auth.currentUser;
   const isAdmin = currentUser?.email === "greeshma@housekeepingco.com";
+  const filteredDebts =
+    selectedMember === "all"
+      ? debts
+      : debts.filter(
+          (d) => d.from === selectedMember || d.to === selectedMember,
+        );
 
   return (
     <div className="card">
@@ -186,26 +194,73 @@ export default function BalancesPage() {
           <option value="month">This Month</option>
         </select>
       </div>
-
       <div className="card" style={{ background: "#f9fafb" }}>
-        <h3>📊 Total To Give / Receive</h3>
-        {Object.keys(totals).map((id) => (
-          <div key={id} className="row">
-            <span>{getName(id)}</span>
-            <span>
-              Give:<b>{(totals[id]?.give || 0).toFixed(2)}</b>| Receive:{" "}
-              <b>{(totals[id]?.receive || 0).toFixed(2)}</b>
-            </span>
-          </div>
-        ))}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <h3>📊 Total To Give / Receive</h3>
+          <button
+            className="btn small"
+            onClick={() => setShowSummary(!showSummary)}
+          >
+            {showSummary ? "Hide" : "Show"}
+          </button>
+        </div>
+        {showSummary && (
+          <table className="summary-table">
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Give (AED)</th>
+                <th>Receive (AED)</th>
+                <th>Net</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.keys(totals).map((id) => {
+                const give = totals[id]?.give || 0;
+                const receive = totals[id]?.receive || 0;
+                const net = receive - give;
+
+                return (
+                  <tr key={id}>
+                    <td>{getName(id)}</td>
+                    <td className="give">{give.toFixed(2)}</td>
+                    <td className="receive">{receive.toFixed(2)}</td>
+                    <td className={net >= 0 ? "positive" : "negative"}>
+                      {net.toFixed(2)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
 
-      <h3 style={{ marginTop: "15px" }}>💸 Who Owes Whom</h3>
+      <h3 style={{ marginTop: "20px" }}>💸 Who Owes Whom</h3>
 
-      {debts.length === 0 ? (
+      <select
+        className="input"
+        style={{ maxWidth: "220px", marginBottom: "10px" }}
+        value={selectedMember}
+        onChange={(e) => setSelectedMember(e.target.value)}
+      >
+        <option value="all">All Members</option>
+        {members.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name}
+          </option>
+        ))}
+      </select>
+      {filteredDebts.length === 0 ? (
         <p style={{ color: "#6b7280" }}>All settled 🎉</p>
       ) : (
-        debts.map((d, i) => (
+        filteredDebts.map((d, i) => (
           <div key={i} className="row" style={{ padding: "6px 0" }}>
             <div>
               <div style={{ fontSize: "12px", color: "#6b7280" }}>

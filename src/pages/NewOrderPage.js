@@ -4,6 +4,7 @@ import { collection, getDocs, addDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { HiOutlineCalculator } from "react-icons/hi";
 import { evaluate } from "mathjs";
+import { auth } from "../auth";
 
 export default function NewOrderPage() {
   const [showAddMember, setShowAddMember] = useState(false);
@@ -34,6 +35,10 @@ export default function NewOrderPage() {
   };
 
   const saveOrder = async () => {
+    if (!isAdmin) {
+      toast.error("Only admin can save orders");
+      return;
+    }
     if (!paidBy) {
       toast.warning("Please select who paid");
       return;
@@ -106,6 +111,8 @@ export default function NewOrderPage() {
       toast.error("Failed to add member");
     }
   };
+  const currentUser = auth.currentUser;
+  const isAdmin = currentUser?.email === "greeshma@housekeepingco.com";
 
   return (
     <div className="card">
@@ -118,15 +125,13 @@ export default function NewOrderPage() {
       >
         <h2>📝 New Lunch Order</h2>
 
-<button
-  className="icon-btn"
-  onClick={() => setShowCalc(true)}
-  title="Open Calculator"
->
-  <HiOutlineCalculator size={20} />
-</button>
-
-
+        <button
+          className="icon-btn"
+          onClick={() => setShowCalc(true)}
+          title="Open Calculator"
+        >
+          <HiOutlineCalculator size={20} />
+        </button>
       </div>
       <input
         className="input full-width"
@@ -178,30 +183,60 @@ export default function NewOrderPage() {
             <input
               type="text"
               value={calcValue}
-onChange={(e) => {
-  const val = e.target.value;
-  setCalcValue(val);
-
-  try {
-    const result = evaluate(val);
-    if (!isNaN(result)) {
-      setCalcValue(result.toString());
-    }
-  } catch {
-    // ignore invalid expressions while typing
-  }
-}}
-
-
+              onChange={(e) => setCalcValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  try {
+                    const result = evaluate(calcValue);
+                    setCalcValue(result.toString());
+                  } catch {
+                    toast.error("Invalid calculation");
+                  }
+                }
+              }}
               className="input"
               placeholder="Type math like 120/5"
             />
 
-            <div style={{ marginTop: 10, textAlign: "right" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginTop: 10,
+              }}
+            >
+              <button
+                className="btn small"
+                onClick={() => {
+                  try {
+                    const result = evaluate(calcValue);
+                    setCalcValue(result.toString());
+                  } catch {
+                    toast.error("Invalid calculation");
+                  }
+                }}
+              >
+                =
+              </button>
+
+              <button
+                className="btn small"
+                onClick={() => setCalcValue("")}
+                style={{ background: "#f3f4f6", color: "#111" }}
+              >
+                Clear
+              </button>
+
               <button className="btn small" onClick={() => setShowCalc(false)}>
                 Close
               </button>
             </div>
+
+            {/* <div style={{ marginTop: 10, textAlign: "right" }}>
+              <button className="btn small" onClick={() => setShowCalc(false)}>
+                Close
+              </button>
+            </div> */}
           </div>
         </div>
       )}
@@ -235,10 +270,22 @@ onChange={(e) => {
           </div>
         </div>
       )}
-
-      <button className="btn" onClick={saveOrder}>
+      <button
+        className="btn-save-order"
+        onClick={saveOrder}
+        disabled={!isAdmin}
+        style={{
+          opacity: isAdmin ? 1 : 0.5,
+          cursor: isAdmin ? "pointer" : "not-allowed",
+        }}
+      >
         Save Order
       </button>
+      {!isAdmin && (
+        <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "5px" }}>
+          Only admin can add orders
+        </p>
+      )}
     </div>
   );
 }

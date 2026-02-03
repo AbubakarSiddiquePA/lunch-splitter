@@ -15,17 +15,17 @@ import "react-toastify/dist/ReactToastify.css";
 export default function App() {
   const [page, setPage] = useState("team");
   const [user, setUser] = useState(null);
-const [authLoading, setAuthLoading] = useState(true);
-const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showMenuModal, setShowMenuModal] = useState(false);
 
-useEffect(() => {
-  const unsub = onAuthStateChanged(auth, (u) => {
-    setUser(u);
-    setAuthLoading(false); // auth check finished
-  });
-  return () => unsub();
-}, []);
-
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setAuthLoading(false); // auth check finished
+    });
+    return () => unsub();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -35,14 +35,14 @@ useEffect(() => {
       toast.error("Logout failed");
     }
   };
-if (authLoading) {
-  return (
-    <div className="loader-screen">
-      <div className="spinner"></div>
-      <p>Loading your workspace...</p>
-    </div>
-  );
-}
+  if (authLoading) {
+    return (
+      <div className="loader-screen">
+        <div className="spinner"></div>
+        <p>Loading your workspace...</p>
+      </div>
+    );
+  }
 
   // 🔒 Not logged in → show login page only
   if (!user) {
@@ -56,76 +56,112 @@ if (authLoading) {
 
   // ✅ Logged in → show app
   return (
-    <div>
-<div className="topbar">
-  <h1>🍽 Office Lunch Splitter</h1>
-<button className="logout-btn" onClick={() => setShowLogoutConfirm(true)}>
-  Logout
-</button>
-
-</div>
-
-
-      <div className="nav">
+    <div className="app-layout">
+      {/* TOP BAR */}
+      <div className="topbar">
+        <h1>🍽 Office Lunch Splitter</h1>
         <button
-          className={page === "team" ? "nav-btn active" : "nav-btn"}
-          onClick={() => setPage("team")}
-        >
-          Team
-        </button>
-
-        <button
-          className={page === "order" ? "nav-btn active" : "nav-btn"}
-          onClick={() => setPage("order")}
-        >
-          New Order
-        </button>
-
-        <button
-          className={page === "history" ? "nav-btn active" : "nav-btn"}
-          onClick={() => setPage("history")}
-        >
-          History
-        </button>
-
-        <button
-          className={page === "balances" ? "nav-btn active" : "nav-btn"}
-          onClick={() => setPage("balances")}
-        >
-          Balances
-        </button>
-      </div>
-
-      <div className="container">
-        {page === "team" && <TeamPage />}
-        {page === "order" && <NewOrderPage />}
-        {page === "history" && <HistoryPage />}
-        {page === "balances" && <BalancesPage />}
-      </div>
-{showLogoutConfirm && (
-  <div style={overlayStyle}>
-    <div style={modalStyle}>
-      <h4>Logout?</h4>
-      <p>Are you sure you want to logout?</p>
-
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-        <button className="btn" onClick={() => setShowLogoutConfirm(false)}>
-          Cancel
-        </button>
-
-        <button
-          className="btn danger"
-          onClick={async () => {
-            await handleLogout();
-            setShowLogoutConfirm(false);
-          }}
+          className="logout-btn"
+          onClick={() => setShowLogoutConfirm(true)}
         >
           Logout
         </button>
       </div>
-    </div>
-  </div>
-)}
+
+      {/* BODY AREA */}
+      <div className="body-area">
+        {/* LEFT SIDEBAR */}
+        <div className="sidebar">
+          <h3 className="menu-title">MENU</h3>
+
+          <button
+            onClick={() => setPage("team")}
+            className={page === "team" ? "side-btn active" : "side-btn"}
+          >
+            👥 Team
+          </button>
+          <button
+            onClick={() => setPage("order")}
+            className={page === "order" ? "side-btn active" : "side-btn"}
+          >
+            📝 New Order
+          </button>
+          <button
+            onClick={() => setPage("history")}
+            className={page === "history" ? "side-btn active" : "side-btn"}
+          >
+            📜 History
+          </button>
+          <button
+            onClick={() => setPage("balances")}
+            className={page === "balances" ? "side-btn active" : "side-btn"}
+          >
+            💰 Balances
+          </button>
+
+          <hr />
+
+          <button className="side-btn" onClick={() => setShowMenuModal(true)}>
+            📋 View Menu
+          </button>
+          {/* <button className="side-btn">⬇ Download Menu</button> */}
+        </div>
+
+        {/* PAGE CONTENT */}
+        <div className="main-content">
+          {page === "team" && <TeamPage />}
+          {page === "order" && <NewOrderPage />}
+          {page === "history" && <HistoryPage />}
+          {page === "balances" && <BalancesPage />}
+        </div>
+      </div>
+      {showMenuModal && (
+        <div style={overlayStyle}>
+          <div style={modalStyle}>
+            <h3 style={{ marginBottom: "10px" }}>📖 Restaurant Menus</h3>
+
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+            >
+              <button
+                className="btn"
+                onClick={() =>
+                  window.open("https://www.zomato.com/dubai/five-crowns-restaurant-al-barsha/menu", "_blank")
+                }
+              >
+                🍗 Five Crown Menu
+              </button>
+
+              <button
+                className="btn"
+                onClick={() =>
+                  window.open("/menus/kingcheff.pdf", "_blank")
+                }
+              >
+                👑 King Chef Menu
+              </button>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                marginTop: "18px",
+                borderTop: "1px solid #eee",
+                paddingTop: "12px",
+              }}
+            >
+              <button
+                className="btn small"
+                style={{ background: "#e5e7eb", color: "#111827" }}
+                onClick={() => setShowMenuModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ToastContainer position="top-right" autoClose={2500} />
     </div>
@@ -147,6 +183,7 @@ const overlayStyle = {
 const modalStyle = {
   background: "white",
   padding: "20px",
-  borderRadius: "8px",
-  width: "300px",
+  borderRadius: "12px",
+  width: "320px",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
 };

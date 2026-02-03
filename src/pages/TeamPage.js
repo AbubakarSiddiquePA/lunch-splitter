@@ -5,7 +5,7 @@ import {
   addDoc,
   getDocs,
   deleteDoc,
-  doc
+  doc,
 } from "firebase/firestore";
 import { toast } from "react-toastify";
 
@@ -15,10 +15,11 @@ export default function TeamPage() {
   const [confirmId, setConfirmId] = useState(null);
 
   const membersRef = collection(db, "members");
+  const [nameError, setNameError] = useState(false);
 
   const loadMembers = async () => {
     const data = await getDocs(membersRef);
-    setMembers(data.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+    setMembers(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
   };
 
   useEffect(() => {
@@ -30,12 +31,13 @@ export default function TeamPage() {
     const trimmed = name.trim();
 
     if (!trimmed) {
+      setNameError(true);
       toast.warning("Please enter a name");
       return;
     }
-
+    setNameError(false); // remove red if valid
     const exists = members.some(
-      m => m.name.toLowerCase() === trimmed.toLowerCase()
+      (m) => m.name.toLowerCase() === trimmed.toLowerCase(),
     );
 
     if (exists) {
@@ -65,38 +67,38 @@ export default function TeamPage() {
       console.error(err);
     }
   };
-   
+
   const canRemoveMember = async (memberId) => {
-  const ordersSnap = await getDocs(collection(db, "orders"));
-  const settlementsSnap = await getDocs(collection(db, "settlements"));
+    const ordersSnap = await getDocs(collection(db, "orders"));
+    const settlementsSnap = await getDocs(collection(db, "settlements"));
 
-  let give = 0;
-  let receive = 0;
+    let give = 0;
+    let receive = 0;
 
-  // Check orders
-  ordersSnap.forEach(doc => {
-    const order = doc.data();
-    const payer = order.paidBy;
+    // Check orders
+    ordersSnap.forEach((doc) => {
+      const order = doc.data();
+      const payer = order.paidBy;
 
-    order.participants.forEach(p => {
-      if (p.userId === memberId && memberId !== payer) {
-        give += p.amount;
-      }
-      if (payer === memberId && p.userId !== memberId) {
-        receive += p.amount;
-      }
+      order.participants.forEach((p) => {
+        if (p.userId === memberId && memberId !== payer) {
+          give += p.amount;
+        }
+        if (payer === memberId && p.userId !== memberId) {
+          receive += p.amount;
+        }
+      });
     });
-  });
 
-  // Subtract settlements
-  settlementsSnap.forEach(doc => {
-    const s = doc.data();
-    if (s.from === memberId) give -= s.amount;
-    if (s.to === memberId) receive -= s.amount;
-  });
+    // Subtract settlements
+    settlementsSnap.forEach((doc) => {
+      const s = doc.data();
+      if (s.from === memberId) give -= s.amount;
+      if (s.to === memberId) receive -= s.amount;
+    });
 
-  return give <= 0.01 && receive <= 0.01;
-};
+    return give <= 0.01 && receive <= 0.01;
+  };
 
   return (
     <div className="card">
@@ -105,10 +107,13 @@ export default function TeamPage() {
       <div className="row" style={{ gap: "10px" }}>
         <input
           type="text"
-          className="input"
+          className={`input ${nameError ? "input-error" : ""}`}
           placeholder="Enter team member name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value);
+            if (e.target.value.trim()) setNameError(false); // remove red while typing
+          }}
         />
         <button className="btn" onClick={addMember} style={{ width: "120px" }}>
           Add
@@ -124,14 +129,16 @@ export default function TeamPage() {
               <span>{m.name}</span>
               <button
                 className="btn danger small"
-onClick={async () => {
-  const allowed = await canRemoveMember(m.id);
-  if (!allowed) {
-toast.error("Settle all balances before removing this member");
-    return;
-  }
-  setConfirmId(m.id);
-}}
+                onClick={async () => {
+                  const allowed = await canRemoveMember(m.id);
+                  if (!allowed) {
+                    toast.error(
+                      "Settle all balances before removing this member",
+                    );
+                    return;
+                  }
+                  setConfirmId(m.id);
+                }}
               >
                 Remove
               </button>
@@ -145,7 +152,13 @@ toast.error("Settle all balances before removing this member");
           <div style={modalStyle}>
             <h4>Remove Member?</h4>
             <p>This action cannot be undone.</p>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+              }}
+            >
               <button className="btn" onClick={() => setConfirmId(null)}>
                 Cancel
               </button>
