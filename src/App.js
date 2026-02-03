@@ -18,6 +18,14 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setShowSplash(false);
+  }, 5000); // 5 seconds
+
+  return () => clearTimeout(timer);
+}, []);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -35,6 +43,17 @@ export default function App() {
       toast.error("Logout failed");
     }
   };
+  if (showSplash) {
+  return (
+    <div className="splash-screen">
+      <div className="splash-content">
+        <h1>🍽 Office Lunch Splitter</h1>
+        <p>Making team lunches simple & fair</p>
+      </div>
+    </div>
+  );
+}
+
   if (authLoading) {
     return (
       <div className="loader-screen">
