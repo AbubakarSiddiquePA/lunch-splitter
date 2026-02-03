@@ -239,11 +239,14 @@ export default function HistoryPage() {
                 <tr className="details-row">
                   <td colSpan="5">
                     <div className="details-box">
-<h4 className="details-title" style={{ textAlign: "left" }}>
-  Order Breakdown
-</h4>
+                      <h4
+                        className="details-title"
+                        style={{ textAlign: "left" }}
+                      >
+                        Order Breakdown
+                      </h4>
 
-<table className="details-table compact">
+                      <table className="details-table compact">
                         <thead>
                           <tr>
                             <th>Member</th>
