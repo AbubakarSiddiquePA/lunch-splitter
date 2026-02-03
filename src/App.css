@@ -74,7 +74,7 @@ h1 {
 .btn {
   background: #1877f2;
   color: white;
-  padding: 8px 0px;
+  padding: 8px 10px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -284,7 +284,7 @@ h1 {
 .member-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* justify-content: space-between; */
   margin-bottom: 8px;
 }
 
@@ -575,4 +575,48 @@ h1 {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+/* ===== Restaurant Quick Select Chips ===== */
+.chip-container {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.chip {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #e5e7eb;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* Hover Effect */
+.chip:hover {
+  background: #f97316;   /* your theme orange */
+  color: white;
+  border-color: #f97316;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+
+/* Active / Selected Chip */
+.chip.active {
+  background: #1877f2;
+  color: white;
+  border-color: #1877f2;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(24,119,242,0.25);
+}
+
+/* Restaurant Input */
+.restaurant-input {
+  margin-top: 4px;
 }

@@ -39,12 +39,14 @@ export default function NewOrderPage() {
       toast.error("Only admin can save orders");
       return;
     }
+
     if (!paidBy) {
       toast.warning("Please select who paid");
       return;
     }
 
-    const participants = members
+    // Step 1: Collect entered amounts
+    const rawParticipants = members
       .map((m) => ({
         userId: m.id,
         name: m.name,
@@ -52,12 +54,20 @@ export default function NewOrderPage() {
       }))
       .filter((p) => p.amount > 0);
 
-    if (participants.length === 0) {
+    if (rawParticipants.length === 0) {
       toast.warning("Enter at least one amount");
       return;
     }
 
-    const total = participants.reduce((sum, p) => sum + p.amount, 0);
+    // Step 2: Calculate full bill total
+    const total = rawParticipants.reduce((sum, p) => sum + p.amount, 0);
+
+    // Step 3: Fix logic → payer should owe 0
+    const participants = rawParticipants.map((p) => ({
+      userId: p.userId,
+      name: p.name,
+      amount: p.userId === paidBy ? 0 : p.amount,
+    }));
 
     try {
       await addDoc(ordersRef, {
@@ -70,6 +80,7 @@ export default function NewOrderPage() {
 
       toast.success("Order saved successfully");
 
+      // Reset form
       setRestaurant("");
       setPaidBy("");
       const reset = {};
@@ -133,12 +144,31 @@ export default function NewOrderPage() {
           <HiOutlineCalculator size={20} />
         </button>
       </div>
-      <input
-        className="input full-width"
-        placeholder="Restaurant"
-        value={restaurant}
-        onChange={(e) => setRestaurant(e.target.value)}
-      />
+{/* Quick Picks */}
+<div className="chip-container">
+  <button
+    className={`chip ${restaurant === "Five Crown" ? "active" : ""}`}
+    onClick={() => setRestaurant("Five Crown")}
+  >
+    🍗 Five Crown
+  </button>
+
+  <button
+    className={`chip ${restaurant === "King Chef" ? "active" : ""}`}
+    onClick={() => setRestaurant("King Chef")}
+  >
+    👑 King Chef
+  </button>
+</div>
+
+<input
+  className="input full-width restaurant-input"
+  placeholder="Or type restaurant name..."
+  value={restaurant}
+  onChange={(e) => setRestaurant(e.target.value)}
+/>
+
+
 
       <select
         className="input full-width"
