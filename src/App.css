@@ -6,6 +6,21 @@ body {
     url("https://images.unsplash.com/photo-1504674900247-0877df9cc836") center/cover no-repeat fixed;
 }
 
+.page-loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+}
+
+.page-loader .spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #1877f2;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
 
 /* Soft white overlay so text stays readable */
 /* body::before {
@@ -617,6 +632,64 @@ h1 {
 }
 
 /* Restaurant Input */
-.restaurant-input {
-  margin-top: 4px;
+.live-total-box {
+  display: flex;
+  align-items: center;
+  margin: 10px 0px 10px 0px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;   /* subtle divider line */
+  font-size: 14px;
+  color: #374151;
+}
+
+/* SAME WIDTH as member-name */
+.live-total-label {
+  width: 160px;
+  font-weight: 600;
+}
+
+/* SAME WIDTH as amount-input */
+.live-total-value {
+  width: 120px;
+  text-align: right;
+  font-weight: 700;
+  color: #111827;
+}
+/* Right side of topbar */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Profile container */
+.profile-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 6px 10px;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+}
+
+/* Circle avatar with first letter */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: white;
+  color: #1877f2;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+/* Email text */
+.profile-email {
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
 }

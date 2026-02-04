@@ -1,10 +1,30 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { collection, getDocs, addDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { HiOutlineCalculator } from "react-icons/hi";
 import { evaluate } from "mathjs";
 import { auth } from "../auth";
+
+const overlayStyle = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  background: "rgba(0,0,0,0.4)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 1000,
+};
+
+const modalStyle = {
+  background: "white",
+  padding: "20px",
+  borderRadius: "8px",
+  width: "300px",
+};
 
 export default function NewOrderPage() {
   const [showAddMember, setShowAddMember] = useState(false);
@@ -18,16 +38,20 @@ export default function NewOrderPage() {
   const ordersRef = collection(db, "orders");
   const [showCalc, setShowCalc] = useState(false);
   const [calcValue, setCalcValue] = useState("");
+  const [loadingMembers, setLoadingMembers] = useState(true);
+  const currentUser = auth.currentUser;
+  const isAdmin = currentUser?.email === "greeshma@housekeepingco.com";
 
   // Load members from Firebase
   useEffect(() => {
     const fetchMembers = async () => {
+      setLoadingMembers(true);
       const data = await getDocs(membersRef);
       setMembers(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
+      setLoadingMembers(false);
     };
 
     fetchMembers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAmountChange = (id, value) => {
@@ -62,7 +86,7 @@ export default function NewOrderPage() {
     // Step 2: Calculate full bill total
     const total = rawParticipants.reduce((sum, p) => sum + p.amount, 0);
 
-    // Step 3: Fix logic → payer should owe 0
+    // Step 3: Fix logic -> payer should owe 0
     const participants = rawParticipants.map((p) => ({
       userId: p.userId,
       name: p.name,
@@ -122,8 +146,10 @@ export default function NewOrderPage() {
       toast.error("Failed to add member");
     }
   };
-  const currentUser = auth.currentUser;
-  const isAdmin = currentUser?.email === "greeshma@housekeepingco.com";
+  const liveTotal = Object.values(amounts).reduce((sum, val) => {
+    const num = parseFloat(val);
+    return sum + (isNaN(num) ? 0 : num);
+  }, 0);
 
   return (
     <div className="card">
@@ -134,7 +160,7 @@ export default function NewOrderPage() {
           alignItems: "center",
         }}
       >
-        <h2>📝 New Lunch Order</h2>
+        <h2>New Lunch Order</h2>
 
         <button
           className="icon-btn"
@@ -144,31 +170,29 @@ export default function NewOrderPage() {
           <HiOutlineCalculator size={20} />
         </button>
       </div>
-{/* Quick Picks */}
-<div className="chip-container">
-  <button
-    className={`chip ${restaurant === "Five Crown" ? "active" : ""}`}
-    onClick={() => setRestaurant("Five Crown")}
-  >
-    🍗 Five Crown
-  </button>
+      {/* Quick Picks */}
+      <div className="chip-container">
+        <button
+          className={`chip ${restaurant === "Five Crown" ? "active" : ""}`}
+          onClick={() => setRestaurant("Five Crown")}
+        >
+          Five Crown
+        </button>
 
-  <button
-    className={`chip ${restaurant === "King Chef" ? "active" : ""}`}
-    onClick={() => setRestaurant("King Chef")}
-  >
-    👑 King Chef
-  </button>
-</div>
+        <button
+          className={`chip ${restaurant === "King Chef" ? "active" : ""}`}
+          onClick={() => setRestaurant("King Chef")}
+        >
+          King Chef
+        </button>
+      </div>
 
-<input
-  className="input full-width restaurant-input"
-  placeholder="Or type restaurant name..."
-  value={restaurant}
-  onChange={(e) => setRestaurant(e.target.value)}
-/>
-
-
+      <input
+        className="input full-width restaurant-input"
+        placeholder="Or type restaurant name..."
+        value={restaurant}
+        onChange={(e) => setRestaurant(e.target.value)}
+      />
 
       <select
         className="input full-width"
@@ -187,24 +211,30 @@ export default function NewOrderPage() {
             {m.name}
           </option>
         ))}
-        <option value="add_new">➕ Add New Member</option>
+        <option value="add_new">Add New Member</option>
       </select>
 
       <h3>Enter Amount Per Person</h3>
 
-      {members.map((m) => (
-        <div key={m.id} className="member-row">
-          <span className="member-name">{m.name}</span>
-
-          <input
-            type="number"
-            className="amount-input"
-            value={amounts[m.id] || ""}
-            onChange={(e) => handleAmountChange(m.id, e.target.value)}
-            placeholder="0.00"
-          />
+      {loadingMembers ? (
+        <div className="page-loader">
+          <div className="spinner"></div>
         </div>
-      ))}
+      ) : (
+        members.map((m) => (
+          <div key={m.id} className="member-row">
+            <span className="member-name">{m.name}</span>
+            <input
+              type="number"
+              className="amount-input"
+              value={amounts[m.id] || ""}
+              onChange={(e) => handleAmountChange(m.id, e.target.value)}
+              placeholder="0.00"
+            />
+          </div>
+        ))
+      )}
+
       {showCalc && (
         <div style={overlayStyle}>
           <div style={modalStyle}>
@@ -300,6 +330,11 @@ export default function NewOrderPage() {
           </div>
         </div>
       )}
+      <div className="live-total-box">
+        <span className="live-total-label">Total Amount</span>
+        <span className="live-total-value">AED {liveTotal.toFixed(2)}</span>
+      </div>
+
       <button
         className="btn-save-order"
         onClick={saveOrder}
@@ -319,22 +354,6 @@ export default function NewOrderPage() {
     </div>
   );
 }
-const overlayStyle = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  width: "100%",
-  height: "100%",
-  background: "rgba(0,0,0,0.4)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 1000,
-};
 
-const modalStyle = {
-  background: "white",
-  padding: "20px",
-  borderRadius: "8px",
-  width: "300px",
-};
+
+

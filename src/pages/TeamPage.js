@@ -16,10 +16,14 @@ export default function TeamPage() {
 
   const membersRef = collection(db, "members");
   const [nameError, setNameError] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const loadMembers = async () => {
+    setLoading(true);
     const data = await getDocs(membersRef);
     setMembers(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
+      setLoading(false);
+
   };
 
   useEffect(() => {
@@ -119,33 +123,38 @@ export default function TeamPage() {
           Add
         </button>
       </div>
+     
+     {loading ? (
+  <div className="page-loader">
+    <div className="spinner"></div>
+  </div>
+) : (
+  <div style={{ marginTop: "15px" }}>
+    {members.length === 0 ? (
+      <p style={{ color: "#6b7280" }}>No members added yet.</p>
+    ) : (
+      members.map((m) => (
+        <div key={m.id} className="row card" style={{ padding: "10px" }}>
+          <span>{m.name}</span>
+          <button
+            className="btn danger small"
+            onClick={async () => {
+              const allowed = await canRemoveMember(m.id);
+              if (!allowed) {
+                toast.error("Settle all balances before removing this member");
+                return;
+              }
+              setConfirmId(m.id);
+            }}
+          >
+            Remove
+          </button>
+        </div>
+      ))
+    )}
+  </div>
+)}
 
-      <div style={{ marginTop: "15px" }}>
-        {members.length === 0 ? (
-          <p style={{ color: "#6b7280" }}>No members added yet.</p>
-        ) : (
-          members.map((m) => (
-            <div key={m.id} className="row card" style={{ padding: "10px" }}>
-              <span>{m.name}</span>
-              <button
-                className="btn danger small"
-                onClick={async () => {
-                  const allowed = await canRemoveMember(m.id);
-                  if (!allowed) {
-                    toast.error(
-                      "Settle all balances before removing this member",
-                    );
-                    return;
-                  }
-                  setConfirmId(m.id);
-                }}
-              >
-                Remove
-              </button>
-            </div>
-          ))
-        )}
-      </div>
 
       {confirmId && (
         <div style={overlayStyle}>

@@ -19,13 +19,13 @@ export default function App() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
-useEffect(() => {
-  const timer = setTimeout(() => {
-    setShowSplash(false);
-  }, 5000); // 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 5000); // 5 seconds
 
-  return () => clearTimeout(timer);
-}, []);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -44,15 +44,15 @@ useEffect(() => {
     }
   };
   if (showSplash) {
-  return (
-    <div className="splash-screen">
-      <div className="splash-content">
-        <h1>🍽 Office Lunch Splitter</h1>
-        <p>Making team lunches simple & fair</p>
+    return (
+      <div className="splash-screen">
+        <div className="splash-content">
+          <h1>🍽 Office Lunch Splitter</h1>
+          <p>Making team lunches simple & fair</p>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   if (authLoading) {
     return (
@@ -77,16 +77,26 @@ useEffect(() => {
   return (
     <div className="app-layout">
       {/* TOP BAR */}
-      <div className="topbar">
-        <h1>🍽 Office Lunch Splitter</h1>
-<button
-  className="logout-btn"
-  onClick={() => setShowLogoutConfirm(true)}
->
-  ⎋ Logout
-</button>
+<div className="topbar">
+  <h1>🍽 Office Lunch Splitter</h1>
 
+  <div className="topbar-right">
+    <div className="profile-box">
+      <div className="avatar">
+        {user?.email?.charAt(0).toUpperCase()}
       </div>
+      <span className="profile-email">{user?.email}</span>
+    </div>
+
+    <button
+      className="logout-btn"
+      onClick={() => setShowLogoutConfirm(true)}
+    >
+      Logout
+    </button>
+  </div>
+</div>
+
 
       {/* BODY AREA */}
       <div className="body-area">
@@ -146,7 +156,10 @@ useEffect(() => {
               <button
                 className="btn"
                 onClick={() =>
-                  window.open("https://www.zomato.com/dubai/five-crowns-restaurant-al-barsha/menu", "_blank")
+                  window.open(
+                    "https://www.zomato.com/dubai/five-crowns-restaurant-al-barsha/menu",
+                    "_blank",
+                  )
                 }
               >
                 🍗 Five Crown Menu
@@ -154,9 +167,7 @@ useEffect(() => {
 
               <button
                 className="btn"
-                onClick={() =>
-                  window.open("/menus/kingcheff.pdf", "_blank")
-                }
+                onClick={() => window.open("/menus/kingcheff.pdf", "_blank")}
               >
                 👑 King Chef Menu
               </button>
@@ -182,31 +193,33 @@ useEffect(() => {
           </div>
         </div>
       )}
-{showLogoutConfirm && (
-  <div className="modal-overlay">
-    <div className="modal-card">
-      <h3 className="modal-title">Logout?</h3>
-      <p className="modal-text">Are you sure you want to logout?</p>
+      {showLogoutConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h3 className="modal-title">Logout?</h3>
+            <p className="modal-text">Are you sure you want to logout?</p>
 
-      <div className="modal-actions">
-        <button className="btn-secondary" onClick={() => setShowLogoutConfirm(false)}>
-          Cancel
-        </button>
+            <div className="modal-actions">
+              <button
+                className="btn-secondary"
+                onClick={() => setShowLogoutConfirm(false)}
+              >
+                Cancel
+              </button>
 
-        <button
-          className="btn-danger"
-          onClick={async () => {
-            await handleLogout();
-            setShowLogoutConfirm(false);
-          }}
-        >
-          Logout
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
+              <button
+                className="btn-danger"
+                onClick={async () => {
+                  await handleLogout();
+                  setShowLogoutConfirm(false);
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ToastContainer position="top-right" autoClose={2500} />
     </div>

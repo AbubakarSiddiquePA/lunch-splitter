@@ -30,11 +30,13 @@ export default function HistoryPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   const loadData = async () => {
+    setLoading(true);
     const orderSnap = await getDocs(collection(db, "orders"));
     const memberSnap = await getDocs(collection(db, "members"));
 
     setOrders(orderSnap.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
     setMembers(memberSnap.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -169,181 +171,226 @@ export default function HistoryPage() {
           onChange={(e) => setToDate(e.target.value)}
         />
       </div>
+      {loading ? (
+        <div className="page-loader">
+          <div className="spinner"></div>
+        </div>
+      ) : (
+        <table className="history-table">
+          <thead>
+            <tr style={{ borderBottom: "1px solid #ddd" }}>
+              <th>Date</th>
+              <th>Restaurant</th>
+              <th>Paid By</th>
+              <th>Total</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
 
-      <table className="history-table">
-        <thead>
-          <tr style={{ borderBottom: "1px solid #ddd" }}>
-            <th>Date</th>
-            <th>Restaurant</th>
-            <th>Paid By</th>
-            <th>Total</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+          <tbody>
+            {filteredOrders.map((order) => (
+              <React.Fragment key={order.id}>
+                <tr style={{ borderBottom: "1px solid #eee" }}>
+                  <td>{new Date(order.date).toLocaleDateString()}</td>
+                  <td>{order.restaurant || "N/A"}</td>
+                  <td>{getName(order.paidBy)}</td>
+                  <td>{order.total}</td>
+                  <td>
+                    <button
+                      className="btn small"
+                      disabled={!isAdmin}
+                      style={{
+                        opacity: isAdmin ? 1 : 0.5,
+                        cursor: isAdmin ? "pointer" : "not-allowed",
+                      }}
+                      onClick={() => {
+                        if (!isAdmin)
+                          return toast.error("Only admin can edit orders");
+                        startEdit(order);
+                      }}
+                    >
+                      Edit
+                    </button>
 
-        <tbody>
-          {filteredOrders.map((order) => (
-            <React.Fragment key={order.id}>
-              <tr style={{ borderBottom: "1px solid #eee" }}>
-                <td>{new Date(order.date).toLocaleDateString()}</td>
-                <td>{order.restaurant || "N/A"}</td>
-                <td>{getName(order.paidBy)}</td>
-                <td>{order.total}</td>
-                <td>
-                  <button
-                    className="btn small"
-                    disabled={!isAdmin}
-                    style={{
-                      opacity: isAdmin ? 1 : 0.5,
-                      cursor: isAdmin ? "pointer" : "not-allowed",
-                    }}
-                    onClick={() => {
-                      if (!isAdmin)
-                        return toast.error("Only admin can edit orders");
-                      startEdit(order);
-                    }}
-                  >
-                    Edit
-                  </button>
+                    <button
+                      className="btn danger small"
+                      disabled={!isAdmin}
+                      style={{
+                        opacity: isAdmin ? 1 : 0.5,
+                        cursor: isAdmin ? "pointer" : "not-allowed",
+                      }}
+                      onClick={() => {
+                        if (!isAdmin)
+                          return toast.error("Only admin can delete orders");
+                        setConfirmDeleteId(order.id);
+                      }}
+                    >
+                      Delete
+                    </button>
 
-                  <button
-                    className="btn danger small"
-                    disabled={!isAdmin}
-                    style={{
-                      opacity: isAdmin ? 1 : 0.5,
-                      cursor: isAdmin ? "pointer" : "not-allowed",
-                    }}
-                    onClick={() => {
-                      if (!isAdmin)
-                        return toast.error("Only admin can delete orders");
-                      setConfirmDeleteId(order.id);
-                    }}
-                  >
-                    Delete
-                  </button>
+                    <button
+                      className="btn small"
+                      onClick={() =>
+                        setOpenId(openId === order.id ? null : order.id)
+                      }
+                    >
+                      {openId === order.id ? "▲ Hide" : "▼ Details"}
+                    </button>
+                  </td>
+                </tr>
 
-                  <button
-                    className="btn small"
-                    onClick={() =>
-                      setOpenId(openId === order.id ? null : order.id)
-                    }
-                  >
-                    {openId === order.id ? "▲ Hide" : "▼ Details"}
-                  </button>
-                </td>
-              </tr>
+                {/* DETAILS ROW */}
+                {/* DETAILS ROW */}
+                {!editOrder && openId === order.id && (
+                  <tr className="details-row">
+                    <td colSpan="5">
+                      <div className="details-box">
+                        <h4
+                          className="details-title"
+                          style={{ textAlign: "left" }}
+                        >
+                          Order Breakdown
+                        </h4>
 
-              {/* DETAILS ROW */}
-              {/* DETAILS ROW */}
-              {!editOrder && openId === order.id && (
-                <tr className="details-row">
-                  <td colSpan="5">
-                    <div className="details-box">
-                      <h4
-                        className="details-title"
-                        style={{ textAlign: "left" }}
-                      >
-                        Order Breakdown
-                      </h4>
-
-                      <table className="details-table compact">
-                        <thead>
-                          <tr>
-                            <th>Member</th>
-                            <th style={{ textAlign: "right" }}>Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {order.participants.map((p, i) => (
-                            <tr key={i}>
-                              <td>{p.name}</td>
-                              <td style={{ textAlign: "right" }}>
-                                {Number(p.amount).toFixed(2)}
-                              </td>
+                        <table className="details-table compact">
+                          <thead>
+                            <tr>
+                              <th>Member</th>
+                              <th style={{ textAlign: "right" }}>Amount</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </td>
-                </tr>
-              )}
+                          </thead>
+                          <tbody>
+                            {order.participants.map((p, i) => (
+                              <tr key={i}>
+                                <td>{p.name}</td>
+                                <td style={{ textAlign: "right" }}>
+                                  {Number(p.amount).toFixed(2)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </td>
+                  </tr>
+                )}
 
-              {/* EDIT ROW */}
-              {editOrder && editOrder.id === order.id && (
-                <tr>
-                  <td colSpan="5" style={{ background: "#f9fafb" }}>
-                    <div style={{ padding: "10px" }}>
-                      <h4>Edit Order</h4>
+                {/* EDIT ROW */}
+                {editOrder && editOrder.id === order.id && (
+                  <tr>
+                    <td colSpan="5" style={{ background: "#f9fafb" }}>
+                      <div style={{ padding: "10px" }}>
+                        <h4>Edit Order</h4>
 
-                      <input
-                        className="input"
-                        value={editRestaurant}
-                        onChange={(e) => setEditRestaurant(e.target.value)}
-                        placeholder="Restaurant"
-                      />
+                        <input
+                          className="input"
+                          value={editRestaurant}
+                          onChange={(e) => setEditRestaurant(e.target.value)}
+                          placeholder="Restaurant"
+                        />
 
-                      <select
-                        className="input"
-                        value={editPaidBy}
-                        onChange={(e) => {
-                          if (e.target.value === "add_new") {
-                            setShowAddMember(true);
-                            return;
-                          }
-                          setEditPaidBy(e.target.value);
-                        }}
-                      >
-                        {members.map((m) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name}
-                          </option>
-                        ))}
-                        <option value="add_new">➕ Add New Member</option>
-                      </select>
-
-                      <h4>Amounts</h4>
-                      {members.map((m) => (
-                        <div key={m.id} className="row">
-                          <span>{m.name}</span>
-                          <input
-                            type="number"
-                            className="input small"
-                            value={editAmounts[m.id] || ""}
-                            onChange={(e) =>
-                              setEditAmounts({
-                                ...editAmounts,
-                                [m.id]: parseFloat(e.target.value) || 0,
-                              })
+                        <select
+                          className="input"
+                          value={editPaidBy}
+                          onChange={(e) => {
+                            if (e.target.value === "add_new") {
+                              setShowAddMember(true);
+                              return;
                             }
-                          />
+                            setEditPaidBy(e.target.value);
+                          }}
+                        >
+                          {members.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.name}
+                            </option>
+                          ))}
+                          <option value="add_new">➕ Add New Member</option>
+                        </select>
+
+                        <h4>Amounts</h4>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "12px",
+                            marginBottom: "20px",
+                          }}
+                        >
+                          {members.map((m) => (
+                            <div
+                              key={m.id}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "4px 0",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  flex: "1",
+                                  fontSize: "14px",
+                                  color: "#374151",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                {m.name}
+                              </span>
+                              <div
+                                style={{
+                                  flex: "1",
+                                  display: "flex",
+                                  justifyContent: "flex-end",
+                                }}
+                              >
+                                <input
+                                  type="number"
+                                  className="input small"
+                                  style={{
+                                    width: "100px",
+                                    textAlign: "right",
+                                    margin: 0, // Removes default browser margins
+                                  }}
+                                  value={editAmounts[m.id] || ""}
+                                  placeholder="0.00"
+                                  onChange={(e) =>
+                                    setEditAmounts({
+                                      ...editAmounts,
+                                      [m.id]: parseFloat(e.target.value) || 0,
+                                    })
+                                  }
+                                />
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
 
-                      <button
-                        className="btn"
-                        disabled={loading}
-                        onClick={() => saveEdit(order.id)}
-                      >
-                        Save Changes
-                      </button>
+                        <button
+                          className="btn"
+                          disabled={loading}
+                          onClick={() => saveEdit(order.id)}
+                        >
+                          Save Changes
+                        </button>
 
-                      <button
-                        className="btn danger"
-                        disabled={loading}
-                        style={{ marginLeft: "10px" }}
-                        onClick={() => setEditOrder(null)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </React.Fragment>
-          ))}
-        </tbody>
-      </table>
+                        <button
+                          className="btn danger"
+                          disabled={loading}
+                          style={{ marginLeft: "10px" }}
+                          onClick={() => setEditOrder(null)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
+      )}
       {showAddMember && (
         <div style={overlayStyle}>
           <div style={modalStyle}>
