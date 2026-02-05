@@ -15,7 +15,6 @@ export default function BalancesPage() {
   const [showSummary, setShowSummary] = useState(true);
   const [selectedMember, setSelectedMember] = useState("all");
   const [showOutstanding, setShowOutstanding] = useState(false);
-  const [settleAnchor, setSettleAnchor] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   // * NEW STATES (only addition)
@@ -523,16 +522,6 @@ export default function BalancesPage() {
                           maxAmount: d.amount,
                         });
                         setSettleAmount(d.amount.toFixed(2));
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const panelWidth = 280;
-                        const left = Math.min(
-                          rect.left,
-                          window.innerWidth - panelWidth - 12,
-                        );
-                        setSettleAnchor({
-                          top: rect.bottom + 8,
-                          left: Math.max(12, left),
-                        });
                       }}
                     >
                       Settle
@@ -614,7 +603,6 @@ export default function BalancesPage() {
               className="btn"
               onClick={() => {
                 setSettleInfo(null);
-                setSettleAnchor(null);
               }}
             >
               Cancel
