@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { collection, getDocs, addDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
@@ -14,8 +14,11 @@ export default function BalancesPage() {
   const [settleAmount, setSettleAmount] = useState("");
   const [showSummary, setShowSummary] = useState(true);
   const [selectedMember, setSelectedMember] = useState("all");
+  const [showOutstanding, setShowOutstanding] = useState(false);
+  const [settleAnchor, setSettleAnchor] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // ⭐ NEW STATES (only addition)
+  // * NEW STATES (only addition)
   const [adjustFrom, setAdjustFrom] = useState("");
   const [adjustTo, setAdjustTo] = useState("");
   const [adjustAmount, setAdjustAmount] = useState("");
@@ -32,7 +35,7 @@ export default function BalancesPage() {
     const ordersSnap = await getDocs(collection(db, "orders"));
     const membersSnap = await getDocs(collection(db, "members"));
     const settlementsSnap = await getDocs(collection(db, "settlements"));
-    const adjustmentsSnap = await getDocs(collection(db, "manual_adjustments")); // ⭐ NEW
+    const adjustmentsSnap = await getDocs(collection(db, "manual_adjustments")); // * NEW
 
     const membersList = membersSnap.docs.map((doc) => ({
       ...doc.data(),
@@ -116,7 +119,7 @@ export default function BalancesPage() {
       if (totalMap[s.to]) totalMap[s.to].receive -= s.amount;
     });
 
-    // ===== ⭐ MANUAL ADJUSTMENTS (NEW FEATURE ONLY) =====
+    // ===== * MANUAL ADJUSTMENTS (NEW FEATURE ONLY) =====
     adjustmentsSnap.docs.forEach((doc) => {
       const adj = doc.data();
       if (!adj.from || !adj.to) return; // safety
@@ -146,14 +149,24 @@ export default function BalancesPage() {
 
   };
 
+  const formatName = (name) => {
+    if (!name) return "";
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  };
+
   const getName = (id) => {
     const user = members.find((m) => m.id === id);
-    return user ? user.name : "Unknown";
+    return user ? formatName(user.name) : "Unknown";
   };
 
   const confirmSettlement = async () => {
     const num = parseFloat(settleAmount);
     if (isNaN(num) || num <= 0) return toast.error("Enter a valid amount");
+    if (settleInfo?.maxAmount != null && num > settleInfo.maxAmount) {
+      return toast.error(
+        `Cannot settle more than AED ${settleInfo.maxAmount.toFixed(2)}`,
+      );
+    }
 
     await addDoc(collection(db, "settlements"), {
       from: settleInfo.from,
@@ -168,7 +181,7 @@ export default function BalancesPage() {
     loadData();
   };
 
-  // ⭐ NEW FUNCTION
+  // * NEW FUNCTION
   const addOutstanding = async () => {
     const amt = parseFloat(adjustAmount);
 
@@ -198,10 +211,52 @@ export default function BalancesPage() {
     selectedMember === "all"
       ? debts
       : debts.filter((d) => d.from === selectedMember || d.to === selectedMember);
+  const sortedDebts = [...filteredDebts].sort(
+    (a, b) => new Date(b.date) - new Date(a.date),
+  );
+  const itemsPerPage = 5;
+  const totalPages = Math.max(1, Math.ceil(sortedDebts.length / itemsPerPage));
+  const pageStartIndex = (currentPage - 1) * itemsPerPage;
+  const pageEndIndex = pageStartIndex + itemsPerPage;
+  const pagedDebts = sortedDebts.slice(pageStartIndex, pageEndIndex);
+  const selectedMemberTotalOwe =
+    selectedMember === "all"
+      ? 0
+      : debts
+          .filter((d) => d.from === selectedMember)
+          .reduce((sum, d) => sum + d.amount, 0);
+  const selectedMemberTotalReceive =
+    selectedMember === "all"
+      ? 0
+      : debts
+          .filter((d) => d.to === selectedMember)
+          .reduce((sum, d) => sum + d.amount, 0);
+  const allOutstandingTotal = debts.reduce((sum, d) => sum + d.amount, 0);
+  const allOutstandingCount = debts.length;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedMember, filter]);
 
   return (
   <div className="card">
-    <h2>💰 Financial Summary</h2>
+    <h2 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+      <span
+        aria-hidden="true"
+        style={{
+          width: "20px",
+          height: "20px",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <svg viewBox="0 0 24 24" role="img" focusable="false">
+          <path d="M20 6H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Zm0 10H4V8h16ZM6 12h6v2H6Z" />
+        </svg>
+      </span>
+      <span>Financial Summary</span>
+    </h2>
 
     {loading ? (
       <div className="page-loader">
@@ -212,53 +267,100 @@ export default function BalancesPage() {
       </div>
     ) : (
       <>
-        {/* ⭐ ADMIN — ADD OUTSTANDING */}
+        {/* * ADMIN - ADD OUTSTANDING */}
         {isAdmin && (
           <div style={{ marginBottom: "15px" }}>
-            <h4>Add Outstanding Balance</h4>
-
-            <select
-              className="input"
-              value={adjustFrom}
-              onChange={(e) => setAdjustFrom(e.target.value)}
+            <button
+              className="btn"
+              onClick={() => setShowOutstanding(!showOutstanding)}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 14px",
+                borderRadius: "10px",
+                background: "#1877f2",
+                color: "#fff",
+                border: "none",
+                textAlign: "left",
+                margin: 0,
+              }}
             >
-              <option value="">Who Owes?</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className="input"
-              value={adjustTo}
-              onChange={(e) => setAdjustTo(e.target.value)}
-            >
-              <option value="">Who Receives?</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-
-            <input
-              type="number"
-              className="input"
-              placeholder="Amount"
-              value={adjustAmount}
-              onChange={(e) => setAdjustAmount(e.target.value)}
-            />
-
-            <button className="btn" onClick={addOutstanding}>
-              Add Balance
+              <span>Click Here Add Outstanding Balance</span>
+              <span style={{ fontSize: "18px", lineHeight: 1 }}>
+                {showOutstanding ? "−" : "+"}
+              </span>
             </button>
+
+            {showOutstanding && (
+              <div
+                style={{
+                  marginTop: "12px",
+                  padding: "12px",
+                  background: "#f9fafb",
+                  borderRadius: "10px",
+                  border: "1px solid #e5e7eb",
+                  display: "flex",
+                  gap: "10px",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                }}
+              >
+                <select
+                  className="input"
+                  style={{ flex: "1 1 160px", minWidth: "160px" }}
+                  value={adjustFrom}
+                  onChange={(e) => setAdjustFrom(e.target.value)}
+                >
+                  <option value="">Who Owes?</option>
+                  {members.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  className="input"
+                  style={{ flex: "1 1 160px", minWidth: "160px" }}
+                  value={adjustTo}
+                  onChange={(e) => setAdjustTo(e.target.value)}
+                >
+                  <option value="">Who Receives?</option>
+                  {members.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="number"
+                  className="input"
+                  style={{ flex: "1 1 140px", minWidth: "140px" }}
+                  placeholder="Amount"
+                  value={adjustAmount}
+                  onChange={(e) => setAdjustAmount(e.target.value)}
+                />
+
+                <button
+                  className="btn"
+                  onClick={addOutstanding}
+                  style={{ flex: "0 0 auto" }}
+                >
+                  Add Balance
+                </button>
+              </div>
+            )}
           </div>
         )}
 
         {/* FILTER */}
         <div style={{ marginBottom: "10px" }}>
+          <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "6px" }}>
+            Filter balances by time period
+          </div>
           <select
             className="input"
             value={filter}
@@ -280,7 +382,7 @@ export default function BalancesPage() {
               alignItems: "center",
             }}
           >
-            <h3>📊 Total To Give / Receive</h3>
+            <h3>Total To Give / Receive</h3>
             <button
               className="btn small"
               onClick={() => setShowSummary(!showSummary)}
@@ -322,7 +424,7 @@ export default function BalancesPage() {
         </div>
 
         {/* DEBTS */}
-        <h3 style={{ marginTop: "20px" }}>💸 Who Owes Whom</h3>
+        <h3 style={{ marginTop: "20px" }}>Who Owes Whom</h3>
 
         <select
           className="input"
@@ -337,42 +439,149 @@ export default function BalancesPage() {
             </option>
           ))}
         </select>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "10px",
+            marginBottom: "8px",
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ fontSize: "12px", color: "#6b7280" }}>
+            {selectedMember === "all" ? (
+              <>
+                Showing all members. Total outstanding: AED{" "}
+                {allOutstandingTotal.toFixed(2)} across {allOutstandingCount}{" "}
+                {allOutstandingCount === 1 ? "entry" : "entries"}.
+              </>
+            ) : (
+              <>
+                <span style={{ color: "#b91c1c" }}>
+                  {getName(selectedMember)} owes: AED{" "}
+                  {selectedMemberTotalOwe.toFixed(2)}
+                </span>
+                {" · "}
+                <span style={{ color: "#15803d" }}>
+                  {getName(selectedMember)} receives: AED{" "}
+                  {selectedMemberTotalReceive.toFixed(2)}
+                </span>
+              </>
+            )}
+          </div>
+          {!isAdmin && (
+            <div
+              style={{
+                fontSize: "12px",
+                color: "#6b7280",
+                marginLeft: "auto",
+                marginRight: "6px",
+              }}
+            >
+              Only admin can settle payments
+            </div>
+          )}
+        </div>
 
         {filteredDebts.length === 0 ? (
-          <p style={{ color: "#6b7280" }}>All settled 🎉</p>
+          <p style={{ color: "#6b7280" }}>All settled</p>
         ) : (
-          filteredDebts.map((d, i) => (
-            <div key={i} className="row" style={{ padding: "6px 0" }}>
-              <div>
-                <div style={{ fontSize: "12px", color: "#6b7280" }}>
-                  {new Date(d.date).toLocaleDateString()}
-                </div>
-                <span>
-                  <b>{getName(d.from)}</b> owes <b>{getName(d.to)}</b>
-                </span>
-              </div>
+          <table className="summary-table" style={{ marginTop: "6px" }}>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Amount (AED)</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagedDebts.map((d, i) => (
+                <tr key={`${d.from}-${d.to}-${d.date}-${i}`}>
+                  <td>{new Date(d.date).toLocaleDateString()}</td>
+                  <td>{getName(d.from)}</td>
+                  <td>{getName(d.to)}</td>
+                  <td>
+                    <b>{d.amount.toFixed(2)}</b>
+                  </td>
+                  <td>
+                    <button
+                      className="btn small"
+                      disabled={!isAdmin}
+                      style={{
+                        opacity: isAdmin ? 1 : 0.5,
+                        cursor: isAdmin ? "pointer" : "not-allowed",
+                      }}
+                      onClick={(e) => {
+                        if (!isAdmin)
+                          return toast.error("Only admin can settle payments");
+                        setSettleInfo({
+                          from: d.from,
+                          to: d.to,
+                          maxAmount: d.amount,
+                        });
+                        setSettleAmount(d.amount.toFixed(2));
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const panelWidth = 280;
+                        const left = Math.min(
+                          rect.left,
+                          window.innerWidth - panelWidth - 12,
+                        );
+                        setSettleAnchor({
+                          top: rect.bottom + 8,
+                          left: Math.max(12, left),
+                        });
+                      }}
+                    >
+                      Settle
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {filteredDebts.length > itemsPerPage && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "10px",
+            }}
+          >
+            <button
+              className="btn small"
+              disabled={currentPage === 1}
+              style={{
+                opacity: currentPage === 1 ? 0.5 : 1,
+                cursor: currentPage === 1 ? "not-allowed" : "pointer",
+              }}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            >
+              Previous
+            </button>
 
-              <span>
-                <b>{d.amount.toFixed(2)}</b>
-                <button
-                  className="btn small"
-                  disabled={!isAdmin}
-                  style={{
-                    opacity: isAdmin ? 1 : 0.5,
-                    cursor: isAdmin ? "pointer" : "not-allowed",
-                  }}
-                  onClick={() => {
-                    if (!isAdmin)
-                      return toast.error("Only admin can settle payments");
-                    setSettleInfo({ from: d.from, to: d.to });
-                    setSettleAmount(d.amount.toFixed(2));
-                  }}
-                >
-                  Settle
-                </button>
-              </span>
+            <div style={{ fontSize: "12px", color: "#6b7280" }}>
+              Page {currentPage} of {totalPages}
             </div>
-          ))
+
+            <button
+              className="btn small"
+              disabled={currentPage === totalPages}
+              style={{
+                opacity: currentPage === totalPages ? 0.5 : 1,
+                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+              }}
+              onClick={() =>
+                setCurrentPage((p) => Math.min(totalPages, p + 1))
+              }
+            >
+              Next
+            </button>
+          </div>
         )}
       </>
     )}
@@ -391,10 +600,23 @@ export default function BalancesPage() {
             className="input"
             value={settleAmount}
             onChange={(e) => setSettleAmount(e.target.value)}
+            max={settleInfo?.maxAmount ?? undefined}
           />
 
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
-            <button className="btn" onClick={() => setSettleInfo(null)}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "10px",
+            }}
+          >
+            <button
+              className="btn"
+              onClick={() => {
+                setSettleInfo(null);
+                setSettleAnchor(null);
+              }}
+            >
               Cancel
             </button>
             <button className="btn" onClick={confirmSettlement}>
@@ -428,3 +650,5 @@ const modalStyle = {
   borderRadius: "8px",
   width: "300px",
 };
+
+

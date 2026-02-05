@@ -33,8 +33,9 @@ export default function NewOrderPage() {
   const [paidBy, setPaidBy] = useState("");
   const [amounts, setAmounts] = useState({});
   const [restaurant, setRestaurant] = useState("");
+  const [dateMode, setDateMode] = useState("today");
+  const [orderDate, setOrderDate] = useState(getLocalDateInputValue(new Date()));
 
-  const membersRef = collection(db, "members");
   const ordersRef = collection(db, "orders");
   const [showCalc, setShowCalc] = useState(false);
   const [calcValue, setCalcValue] = useState("");
@@ -45,6 +46,7 @@ export default function NewOrderPage() {
   // Load members from Firebase
   useEffect(() => {
     const fetchMembers = async () => {
+      const membersRef = collection(db, "members");
       setLoadingMembers(true);
       const data = await getDocs(membersRef);
       setMembers(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
@@ -95,11 +97,12 @@ export default function NewOrderPage() {
 
     try {
       await addDoc(ordersRef, {
-        date: new Date().toISOString(),
+        date: new Date(`${orderDate}T00:00:00`).toISOString(),
         restaurant,
         paidBy,
         total,
         participants,
+        rawParticipants,
       });
 
       toast.success("Order saved successfully");
@@ -107,6 +110,8 @@ export default function NewOrderPage() {
       // Reset form
       setRestaurant("");
       setPaidBy("");
+      setDateMode("today");
+      setOrderDate(getLocalDateInputValue(new Date()));
       const reset = {};
       members.forEach((m) => (reset[m.id] = ""));
       setAmounts(reset);
@@ -134,6 +139,7 @@ export default function NewOrderPage() {
     }
 
     try {
+      const membersRef = collection(db, "members");
       const docRef = await addDoc(membersRef, { name: trimmed });
 
       toast.success("Member added");
@@ -160,7 +166,23 @@ export default function NewOrderPage() {
           alignItems: "center",
         }}
       >
-        <h2>New Lunch Order</h2>
+        <h2 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span
+            aria-hidden="true"
+            style={{
+              width: "20px",
+              height: "20px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <svg viewBox="0 0 24 24" role="img" focusable="false">
+              <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Zm0 2.4L18.6 10H14ZM8 13h8v2H8Zm0 4h8v2H8Zm0-8h4v2H8Z" />
+            </svg>
+          </span>
+          <span>New Lunch Order</span>
+        </h2>
 
         <button
           className="icon-btn"
@@ -170,7 +192,38 @@ export default function NewOrderPage() {
           <HiOutlineCalculator size={20} />
         </button>
       </div>
+      {/* Date Select */}
+      <div className="section-label">Date</div>
+      <div className="chip-container" style={{ marginBottom: "6px" }}>
+        <button
+          className={`chip ${dateMode === "today" ? "active" : ""}`}
+          onClick={() => {
+            setDateMode("today");
+            setOrderDate(getLocalDateInputValue(new Date()));
+          }}
+        >
+          Today
+        </button>
+
+        <button
+          className={`chip ${dateMode === "custom" ? "active" : ""}`}
+          onClick={() => setDateMode("custom")}
+        >
+          Choose Date
+        </button>
+      </div>
+
+      {dateMode === "custom" && (
+        <input
+          type="date"
+          className="input full-width date-input"
+          min={getLocalDateInputValue(getOneMonthAgoDate())}
+          value={orderDate}
+          onChange={(e) => setOrderDate(e.target.value)}
+        />
+      )}
       {/* Quick Picks */}
+      <div className="section-label">Restaurant</div>
       <div className="chip-container">
         <button
           className={`chip ${restaurant === "Five Crown" ? "active" : ""}`}
@@ -354,6 +407,19 @@ export default function NewOrderPage() {
     </div>
   );
 }
+
+function getLocalDateInputValue(date) {
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60000);
+  return localDate.toISOString().slice(0, 10);
+}
+
+function getOneMonthAgoDate() {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 1);
+  return d;
+}
+
 
 
 

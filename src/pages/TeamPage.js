@@ -106,7 +106,23 @@ export default function TeamPage() {
 
   return (
     <div className="card">
-      <h2>👥 Team Members</h2>
+      <h2 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <span
+          aria-hidden="true"
+          style={{
+            width: "20px",
+            height: "20px",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <svg viewBox="0 0 24 24" role="img" focusable="false">
+            <path d="M16 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3ZM8 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3ZM16 13c-2.7 0-8 1.4-8 4v2h16v-2c0-2.6-5.3-4-8-4Zm-8 0c-.6 0-1.6.1-2.6.4A5.7 5.7 0 0 0 2 16.9V19h6v-2c0-1.4.6-2.6 1.6-3.6A8.7 8.7 0 0 0 8 13Z" />
+          </svg>
+        </span>
+        <span>Team Members</span>
+      </h2>
 
       <div className="row" style={{ gap: "10px" }}>
         <input
@@ -117,6 +133,12 @@ export default function TeamPage() {
           onChange={(e) => {
             setName(e.target.value);
             if (e.target.value.trim()) setNameError(false); // remove red while typing
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addMember();
+            }
           }}
         />
         <button className="btn" onClick={addMember} style={{ width: "120px" }}>

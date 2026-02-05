@@ -108,31 +108,56 @@ export default function App() {
             onClick={() => setPage("team")}
             className={page === "team" ? "side-btn active" : "side-btn"}
           >
-            👥 Team
+            <span className="side-btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" focusable="false">
+                <path d="M16 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3ZM8 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3ZM16 13c-2.7 0-8 1.4-8 4v2h16v-2c0-2.6-5.3-4-8-4Zm-8 0c-.6 0-1.6.1-2.6.4A5.7 5.7 0 0 0 2 16.9V19h6v-2c0-1.4.6-2.6 1.6-3.6A8.7 8.7 0 0 0 8 13Z" />
+              </svg>
+            </span>
+            <span>Team</span>
           </button>
           <button
             onClick={() => setPage("order")}
             className={page === "order" ? "side-btn active" : "side-btn"}
           >
-            📝 New Order
+            <span className="side-btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" focusable="false">
+                <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Zm0 2.4L18.6 10H14ZM8 13h8v2H8Zm0 4h8v2H8Zm0-8h4v2H8Z" />
+              </svg>
+            </span>
+            <span>New Order</span>
           </button>
           <button
             onClick={() => setPage("history")}
             className={page === "history" ? "side-btn active" : "side-btn"}
           >
-            📜 History
+            <span className="side-btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" focusable="false">
+                <path d="M13 3a9 9 0 1 0 8.5 6h-2.2A7 7 0 1 1 13 5v3l4-4-4-4Zm-1 5h2v6h-6v-2h4Z" />
+              </svg>
+            </span>
+            <span>History</span>
           </button>
           <button
             onClick={() => setPage("balances")}
             className={page === "balances" ? "side-btn active" : "side-btn"}
           >
-            💰 Balances
+            <span className="side-btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" focusable="false">
+                <path d="M20 6H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Zm0 10H4V8h16ZM6 12h6v2H6Z" />
+              </svg>
+            </span>
+            <span>Financial Summary</span>
           </button>
 
           <hr />
 
           <button className="side-btn" onClick={() => setShowMenuModal(true)}>
-            📋 View Menu
+            <span className="side-btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" focusable="false">
+                <path d="M7 2h10a2 2 0 0 1 2 2v16l-3-2-3 2-3-2-3 2V4a2 2 0 0 1 2-2Zm1 6h8v2H8Zm0 4h8v2H8Zm0-8h8v2H8Z" />
+              </svg>
+            </span>
+            <span>View Menu</span>
           </button>
           {/* <button className="side-btn">⬇ Download Menu</button> */}
         </div>
