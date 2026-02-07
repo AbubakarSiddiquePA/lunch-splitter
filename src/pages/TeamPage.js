@@ -124,10 +124,10 @@ export default function TeamPage() {
         <span>Team Members</span>
       </h2>
 
-      <div className="row" style={{ gap: "10px" }}>
+      <div className="form-row">
         <input
           type="text"
-          className={`input ${nameError ? "input-error" : ""}`}
+          className={`input grow-input ${nameError ? "input-error" : ""}`}
           placeholder="Enter team member name"
           value={name}
           onChange={(e) => {
@@ -141,7 +141,7 @@ export default function TeamPage() {
             }
           }}
         />
-        <button className="btn" onClick={addMember} style={{ width: "120px" }}>
+        <button className="btn primary-fixed-btn" onClick={addMember}>
           Add
         </button>
       </div>
@@ -151,15 +151,18 @@ export default function TeamPage() {
     <div className="spinner"></div>
   </div>
 ) : (
-  <div style={{ marginTop: "15px" }}>
+      <div style={{ marginTop: "15px" }}>
     {members.length === 0 ? (
       <p style={{ color: "#6b7280" }}>No members added yet.</p>
     ) : (
       members.map((m) => (
-        <div key={m.id} className="row card" style={{ padding: "10px" }}>
+        <div key={m.id} className="row card team-member-row" style={{ padding: "10px" }}>
           <span>{m.name}</span>
           <button
-            className="btn danger small"
+            className="member-remove-btn"
+            type="button"
+            aria-label={`Remove ${m.name}`}
+            title={`Remove ${m.name}`}
             onClick={async () => {
               const allowed = await canRemoveMember(m.id);
               if (!allowed) {
@@ -169,7 +172,9 @@ export default function TeamPage() {
               setConfirmId(m.id);
             }}
           >
-            Remove
+            <svg viewBox="0 0 24 24" role="img" focusable="false">
+              <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm1 6h2v8h-2V9Zm4 0h2v8h-2V9ZM7 9h2v8H7V9Z" />
+            </svg>
           </button>
         </div>
       ))
@@ -223,5 +228,7 @@ const modalStyle = {
   background: "white",
   padding: "20px",
   borderRadius: "8px",
-  width: "300px",
+  width: "min(300px, calc(100vw - 32px))",
+  maxHeight: "calc(100vh - 32px)",
+  overflowY: "auto",
 };

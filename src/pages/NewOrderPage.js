@@ -5,29 +5,11 @@ import { toast } from "react-toastify";
 import { HiOutlineCalculator } from "react-icons/hi";
 import { evaluate } from "mathjs";
 import { auth } from "../auth";
-
-const overlayStyle = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  width: "100%",
-  height: "100%",
-  background: "rgba(0,0,0,0.4)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 1000,
-};
-
-const modalStyle = {
-  background: "white",
-  padding: "20px",
-  borderRadius: "8px",
-  width: "300px",
-};
+import { createPortal } from "react-dom";
 
 export default function NewOrderPage() {
   const [showAddMember, setShowAddMember] = useState(false);
+  const [showPaidByPicker, setShowPaidByPicker] = useState(false);
   const [newMemberName, setNewMemberName] = useState("");
   const [members, setMembers] = useState([]);
   const [paidBy, setPaidBy] = useState("");
@@ -55,6 +37,18 @@ export default function NewOrderPage() {
 
     fetchMembers();
   }, []);
+
+  useEffect(() => {
+    if (showCalc || showAddMember || showPaidByPicker) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+
+    document.body.style.overflow = "";
+    return undefined;
+  }, [showCalc, showAddMember, showPaidByPicker]);
 
   const handleAmountChange = (id, value) => {
     setAmounts({ ...amounts, [id]: value });
@@ -156,17 +150,21 @@ export default function NewOrderPage() {
     const num = parseFloat(val);
     return sum + (isNaN(num) ? 0 : num);
   }, 0);
+  const selectedPayer = members.find((m) => m.id === paidBy);
+
+  const runCalculation = () => {
+    try {
+      const result = evaluate(calcValue);
+      setCalcValue(result.toString());
+    } catch {
+      toast.error("Invalid calculation");
+    }
+  };
 
   return (
-    <div className="card">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <h2 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+    <div className="card new-order-card">
+      <div className="page-head">
+        <h2 className="new-order-title">
           <span
             aria-hidden="true"
             style={{
@@ -194,7 +192,7 @@ export default function NewOrderPage() {
       </div>
       {/* Date Select */}
       <div className="section-label">Date</div>
-      <div className="chip-container" style={{ marginBottom: "6px" }}>
+      <div className="chip-container compact-gap">
         <button
           className={`chip ${dateMode === "today" ? "active" : ""}`}
           onClick={() => {
@@ -247,25 +245,13 @@ export default function NewOrderPage() {
         onChange={(e) => setRestaurant(e.target.value)}
       />
 
-      <select
-        className="input full-width"
-        value={paidBy}
-        onChange={(e) => {
-          if (e.target.value === "add_new") {
-            setShowAddMember(true);
-            return;
-          }
-          setPaidBy(e.target.value);
-        }}
+      <button
+        type="button"
+        className={`input full-width paidby-trigger ${paidBy ? "has-value" : ""}`}
+        onClick={() => setShowPaidByPicker(true)}
       >
-        <option value="">Who Paid?</option>
-        {members.map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.name}
-          </option>
-        ))}
-        <option value="add_new">Add New Member</option>
-      </select>
+        {selectedPayer ? `Who Paid: ${selectedPayer.name}` : "Who Paid?"}
+      </button>
 
       <h3>Enter Amount Per Person</h3>
 
@@ -274,115 +260,141 @@ export default function NewOrderPage() {
           <div className="spinner"></div>
         </div>
       ) : (
-        members.map((m) => (
-          <div key={m.id} className="member-row">
-            <span className="member-name">{m.name}</span>
-            <input
-              type="number"
-              className="amount-input"
-              value={amounts[m.id] || ""}
-              onChange={(e) => handleAmountChange(m.id, e.target.value)}
-              placeholder="0.00"
-            />
-          </div>
-        ))
+        <div className="amount-list">
+          {members.map((m) => (
+            <div key={m.id} className="member-row">
+              <span className="member-name">{m.name}</span>
+              <input
+                type="number"
+                className="amount-input"
+                value={amounts[m.id] || ""}
+                onChange={(e) => handleAmountChange(m.id, e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+          ))}
+        </div>
       )}
 
-      {showCalc && (
-        <div style={overlayStyle}>
-          <div style={modalStyle}>
-            <h4>Quick Calculator</h4>
+      {showCalc &&
+        createPortal(
+          <div className="modal-overlay page-modal-overlay">
+            <div className="modal-card calc-modal">
+              <h4 className="calc-title">Quick Calculator</h4>
 
-            <input
-              type="text"
-              value={calcValue}
-              onChange={(e) => setCalcValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  try {
-                    const result = evaluate(calcValue);
-                    setCalcValue(result.toString());
-                  } catch {
-                    toast.error("Invalid calculation");
-                  }
-                }
-              }}
-              className="input"
-              placeholder="Type math like 120/5"
-            />
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginTop: 10,
-              }}
-            >
-              <button
-                className="btn small"
-                onClick={() => {
-                  try {
-                    const result = evaluate(calcValue);
-                    setCalcValue(result.toString());
-                  } catch {
-                    toast.error("Invalid calculation");
+              <input
+                type="text"
+                value={calcValue}
+                onChange={(e) => setCalcValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    runCalculation();
                   }
                 }}
-              >
-                =
-              </button>
+                className="input calc-input"
+                placeholder="Type math like 120/5"
+              />
 
               <button
-                className="btn small"
-                onClick={() => setCalcValue("")}
-                style={{ background: "#f3f4f6", color: "#111" }}
+                className="btn calc-equal-btn"
+                onClick={runCalculation}
               >
-                Clear
+                Calculate
               </button>
 
-              <button className="btn small" onClick={() => setShowCalc(false)}>
-                Close
-              </button>
+              <div className="calc-secondary-actions">
+                <button
+                  className="btn-secondary calc-clear-btn"
+                  onClick={() => setCalcValue("")}
+                >
+                  Clear
+                </button>
+
+                <button
+                  className="btn-secondary calc-close-btn"
+                  onClick={() => setShowCalc(false)}
+                >
+                  Close
+                </button>
+              </div>
             </div>
+          </div>,
+          document.body,
+        )}
 
-            {/* <div style={{ marginTop: 10, textAlign: "right" }}>
-              <button className="btn small" onClick={() => setShowCalc(false)}>
-                Close
-              </button>
-            </div> */}
-          </div>
-        </div>
-      )}
+      {showPaidByPicker &&
+        createPortal(
+          <div className="modal-overlay page-modal-overlay">
+            <div className="modal-card paidby-modal">
+              <h4 className="paidby-title">Select Who Paid</h4>
+              <div className="paidby-list">
+                {members.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    className={`paidby-option ${paidBy === m.id ? "active" : ""}`}
+                    onClick={() => {
+                      setPaidBy(m.id);
+                      setShowPaidByPicker(false);
+                    }}
+                  >
+                    {m.name}
+                  </button>
+                ))}
+              </div>
 
-      {showAddMember && (
-        <div style={overlayStyle}>
-          <div style={modalStyle}>
-            <h4>Add New Member</h4>
-
-            <input
-              className="input"
-              placeholder="Member name"
-              value={newMemberName}
-              onChange={(e) => setNewMemberName(e.target.value)}
-            />
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "10px",
-              }}
-            >
-              <button className="btn" onClick={() => setShowAddMember(false)}>
-                Cancel
-              </button>
-              <button className="btn" onClick={addNewMember}>
-                Add
-              </button>
+              <div className="modal-actions">
+                <button
+                  className="btn-secondary"
+                  onClick={() => {
+                    setShowPaidByPicker(false);
+                  }}
+                >
+                  Close
+                </button>
+                <button
+                  className="btn"
+                  onClick={() => {
+                    setShowPaidByPicker(false);
+                    setShowAddMember(true);
+                  }}
+                >
+                  Add New Member
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
+
+      {showAddMember &&
+        createPortal(
+          <div className="modal-overlay page-modal-overlay">
+            <div className="modal-card add-member-modal">
+              <h4>Add New Member</h4>
+
+              <input
+                className="input"
+                placeholder="Member name"
+                value={newMemberName}
+                onChange={(e) => setNewMemberName(e.target.value)}
+              />
+
+              <div className="modal-actions">
+                <button
+                  className="btn-secondary"
+                  onClick={() => setShowAddMember(false)}
+                >
+                  Cancel
+                </button>
+                <button className="btn" onClick={addNewMember}>
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
       <div className="live-total-box">
         <span className="live-total-label">Total Amount</span>
         <span className="live-total-value">AED {liveTotal.toFixed(2)}</span>

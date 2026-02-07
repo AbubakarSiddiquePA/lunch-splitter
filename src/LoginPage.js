@@ -104,15 +104,17 @@ const pageStyle = {
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
+  padding: "16px",
   background: "linear-gradient(135deg, #f3f4f6, #e5e7eb)",
 };
 
 const cardStyle = {
   background: "white",
-  padding: "35px",
+  padding: "clamp(20px, 4vw, 35px)",
   borderRadius: "12px",
   width: "100%",
   maxWidth: "380px",
+  boxSizing: "border-box",
   boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
   textAlign: "center",
 };

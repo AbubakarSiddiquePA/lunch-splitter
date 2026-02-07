@@ -238,8 +238,8 @@ export default function BalancesPage() {
   }, [selectedMember, filter]);
 
   return (
-  <div className="card">
-    <h2 style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+  <div className="card balances-page">
+    <h2 className="balances-title" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
       <span
         aria-hidden="true"
         style={{
@@ -268,9 +268,9 @@ export default function BalancesPage() {
       <>
         {/* * ADMIN - ADD OUTSTANDING */}
         {isAdmin && (
-          <div style={{ marginBottom: "15px" }}>
+          <div className="balances-section" style={{ marginBottom: "15px" }}>
             <button
-              className="btn"
+              className="btn balances-outstanding-toggle"
               onClick={() => setShowOutstanding(!showOutstanding)}
               style={{
                 width: "100%",
@@ -294,6 +294,7 @@ export default function BalancesPage() {
 
             {showOutstanding && (
               <div
+                className="balances-outstanding-form"
                 style={{
                   marginTop: "12px",
                   padding: "12px",
@@ -356,25 +357,25 @@ export default function BalancesPage() {
         )}
 
         {/* FILTER */}
-        <div style={{ marginBottom: "10px" }}>
-          <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "6px" }}>
+        <div className="balances-filter-box" style={{ marginBottom: "10px" }}>
+          <div className="balances-helper-text" style={{ fontSize: "12px", color: "#6b7280", marginBottom: "6px" }}>
             Filter balances by time period
           </div>
-          <select
-            className="input"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          >
-            <option value="all">All Time</option>
-            <option value="today">Today</option>
-            <option value="week">This Week</option>
-            <option value="month">This Month</option>
-          </select>
+          <div className="balances-filter-chips">
+            <button
+              type="button"
+              className={`chip ${filter === "all" ? "active" : ""}`}
+              onClick={() => setFilter("all")}
+            >
+              All Time
+            </button>
+          </div>
         </div>
 
         {/* SUMMARY */}
-        <div className="card" style={{ background: "#f9fafb" }}>
+        <div className="card balances-summary-card" style={{ background: "#f9fafb" }}>
           <div
+            className="balances-summary-head"
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -383,7 +384,7 @@ export default function BalancesPage() {
           >
             <h3>Total To Give / Receive</h3>
             <button
-              className="btn small"
+              className="btn small balances-summary-toggle"
               onClick={() => setShowSummary(!showSummary)}
             >
               {showSummary ? "Hide" : "Show"}
@@ -391,6 +392,7 @@ export default function BalancesPage() {
           </div>
 
           {showSummary && (
+            <div className="table-scroll">
             <table className="summary-table">
               <thead>
                 <tr>
@@ -419,14 +421,15 @@ export default function BalancesPage() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 
         {/* DEBTS */}
-        <h3 style={{ marginTop: "20px" }}>Who Owes Whom</h3>
+        <h3 className="balances-subtitle" style={{ marginTop: "20px" }}>Who Owes Whom</h3>
 
         <select
-          className="input"
+          className="input balances-member-filter"
           style={{ maxWidth: "220px", marginBottom: "10px" }}
           value={selectedMember}
           onChange={(e) => setSelectedMember(e.target.value)}
@@ -439,6 +442,7 @@ export default function BalancesPage() {
           ))}
         </select>
         <div
+          className="balances-meta-row"
           style={{
             display: "flex",
             justifyContent: "space-between",
@@ -448,7 +452,7 @@ export default function BalancesPage() {
             flexWrap: "wrap",
           }}
         >
-          <div style={{ fontSize: "12px", color: "#6b7280" }}>
+          <div className="balances-helper-text" style={{ fontSize: "12px", color: "#6b7280" }}>
             {selectedMember === "all" ? (
               <>
                 Showing all members. Total outstanding: AED{" "}
@@ -471,6 +475,7 @@ export default function BalancesPage() {
           </div>
           {!isAdmin && (
             <div
+              className="balances-helper-text balances-admin-hint"
               style={{
                 fontSize: "12px",
                 color: "#6b7280",
@@ -486,6 +491,7 @@ export default function BalancesPage() {
         {filteredDebts.length === 0 ? (
           <p style={{ color: "#6b7280" }}>All settled</p>
         ) : (
+          <div className="table-scroll">
           <table className="summary-table" style={{ marginTop: "6px" }}>
             <thead>
               <tr>
@@ -507,7 +513,7 @@ export default function BalancesPage() {
                   </td>
                   <td>
                     <button
-                      className="btn small"
+                      className="history-action-btn history-action-btn-edit balances-settle-btn"
                       disabled={!isAdmin}
                       style={{
                         opacity: isAdmin ? 1 : 0.5,
@@ -531,9 +537,11 @@ export default function BalancesPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
         {filteredDebts.length > itemsPerPage && (
           <div
+            className="balances-pagination"
             style={{
               display: "flex",
               alignItems: "center",
@@ -542,7 +550,7 @@ export default function BalancesPage() {
             }}
           >
             <button
-              className="btn small"
+              className="history-action-btn history-action-btn-details"
               disabled={currentPage === 1}
               style={{
                 opacity: currentPage === 1 ? 0.5 : 1,
@@ -558,7 +566,7 @@ export default function BalancesPage() {
             </div>
 
             <button
-              className="btn small"
+              className="history-action-btn history-action-btn-details"
               disabled={currentPage === totalPages}
               style={{
                 opacity: currentPage === totalPages ? 0.5 : 1,
@@ -593,6 +601,7 @@ export default function BalancesPage() {
           />
 
           <div
+            className="modal-actions"
             style={{
               display: "flex",
               justifyContent: "flex-end",
@@ -636,7 +645,9 @@ const modalStyle = {
   background: "white",
   padding: "20px",
   borderRadius: "8px",
-  width: "300px",
+  width: "min(300px, calc(100vw - 32px))",
+  maxHeight: "calc(100vh - 32px)",
+  overflowY: "auto",
 };
 
 

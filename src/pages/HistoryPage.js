@@ -229,7 +229,7 @@ export default function HistoryPage() {
         <span>Lunch History</span>
       </h2>
 
-      <div className="row" style={{ gap: "10px", marginBottom: "10px" }}>
+      <div className="form-row" style={{ marginBottom: "10px" }}>
         <input
           type="date"
           className="input"
@@ -279,6 +279,7 @@ export default function HistoryPage() {
                   Only admin can edit or delete orders
                 </p>
               )}
+              <div className="table-scroll">
               <table className="history-table">
           <thead>
             <tr style={{ borderBottom: "1px solid #ddd" }}>
@@ -299,8 +300,9 @@ export default function HistoryPage() {
                   <td>{getName(order.paidBy)}</td>
                   <td>{Number(order.total).toFixed(2)}</td>
                   <td>
+                    <div className="history-actions">
                     <button
-                      className="btn small"
+                      className="history-action-btn history-action-btn-edit"
                       disabled={!isAdmin}
                       style={{
                         opacity: isAdmin ? 1 : 0.5,
@@ -316,7 +318,7 @@ export default function HistoryPage() {
                     </button>
 
                     <button
-                      className="btn danger small"
+                      className="history-action-btn history-action-btn-delete"
                       disabled={!isAdmin}
                       style={{
                         opacity: isAdmin ? 1 : 0.5,
@@ -332,13 +334,14 @@ export default function HistoryPage() {
                     </button>
 
                     <button
-                      className="btn small"
+                      className="history-action-btn history-action-btn-details"
                       onClick={() =>
                         setOpenId(openId === order.id ? null : order.id)
                       }
                     >
-                      {openId === order.id ? "▲ Hide" : "▼ Details"}
+                      {openId === order.id ? "Hide" : "Details"}
                     </button>
+                    </div>
                   </td>
                 </tr>
 
@@ -458,7 +461,7 @@ export default function HistoryPage() {
                                   type="number"
                                   className="input small"
                                   style={{
-                                    width: "100px",
+                                    width: "min(120px, 100%)",
                                     textAlign: "right",
                                     margin: 0, // Removes default browser margins
                                   }}
@@ -508,6 +511,7 @@ export default function HistoryPage() {
             ))}
           </tbody>
           </table>
+          </div>
             </>
           )}
 
@@ -545,26 +549,28 @@ export default function HistoryPage() {
               {sortedSettlements.length === 0 ? (
                 <p style={{ color: "#6b7280" }}>No settlements yet</p>
               ) : (
-                <table className="history-table">
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid #ddd" }}>
-                      <th>Date</th>
-                      <th>Settled By</th>
-                      <th>Settled To</th>
-                      <th>Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedSettlements.map((s) => (
-                      <tr key={s.id} style={{ borderBottom: "1px solid #eee" }}>
-                        <td>{new Date(s.date).toLocaleDateString()}</td>
-                        <td>{getName(s.from)}</td>
-                        <td>{getName(s.to)}</td>
-                        <td>{Number(s.amount || 0).toFixed(2)}</td>
+                <div className="table-scroll">
+                  <table className="history-table">
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid #ddd" }}>
+                        <th>Date</th>
+                        <th>Settled By</th>
+                        <th>Settled To</th>
+                        <th>Amount</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {sortedSettlements.map((s) => (
+                        <tr key={s.id} style={{ borderBottom: "1px solid #eee" }}>
+                          <td>{new Date(s.date).toLocaleDateString()}</td>
+                          <td>{getName(s.from)}</td>
+                          <td>{getName(s.to)}</td>
+                          <td>{Number(s.amount || 0).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           )}
@@ -603,26 +609,28 @@ export default function HistoryPage() {
               {sortedAdjustments.length === 0 ? (
                 <p style={{ color: "#6b7280" }}>No outstanding entries yet</p>
               ) : (
-                <table className="history-table">
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid #ddd" }}>
-                      <th>Date</th>
-                      <th>Added From</th>
-                      <th>Added To</th>
-                      <th>Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedAdjustments.map((a) => (
-                      <tr key={a.id} style={{ borderBottom: "1px solid #eee" }}>
-                        <td>{new Date(a.date).toLocaleDateString()}</td>
-                        <td>{getName(a.from)}</td>
-                        <td>{getName(a.to)}</td>
-                        <td>{Number(a.amount || 0).toFixed(2)}</td>
+                <div className="table-scroll">
+                  <table className="history-table">
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid #ddd" }}>
+                        <th>Date</th>
+                        <th>Added From</th>
+                        <th>Added To</th>
+                        <th>Amount</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {sortedAdjustments.map((a) => (
+                        <tr key={a.id} style={{ borderBottom: "1px solid #eee" }}>
+                          <td>{new Date(a.date).toLocaleDateString()}</td>
+                          <td>{getName(a.from)}</td>
+                          <td>{getName(a.to)}</td>
+                          <td>{Number(a.amount || 0).toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           )}
@@ -754,5 +762,8 @@ const modalStyle = {
   background: "white",
   padding: "20px",
   borderRadius: "8px",
-  width: "300px",
+  width: "min(300px, calc(100vw - 32px))",
+  maxHeight: "calc(100vh - 32px)",
+  overflowY: "auto",
 };
+
